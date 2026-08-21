@@ -1,0 +1,2954 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Rummi User Administration API",
+    "version": "1.0.0",
+    "description": "API para la gestión de usuarios de Rummi"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/users",
+      "summary": "Obtener usuarios o un usuario por identificador",
+      "description": "Si se envía `userName`, devuelve un usuario específico. Si no, devuelve una lista filtrada por los parámetros opcionales disponibles.",
+      "parameters": [
+        {
+          "name": "X-Ct",
+          "location": "header",
+          "required": true,
+          "description": "Token/Llave de contexto para operaciones de cifrado/descifrado.",
+          "type": "string",
+          "format": null,
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "enum": []
+        },
+        {
+          "name": "userName",
+          "location": "query",
+          "required": false,
+          "description": "Identificador único del usuario a consultar.",
+          "type": "string",
+          "format": null,
+          "example": "a4c8d4b8-d091-70a8-7497-2274ab746db1",
+          "enum": []
+        },
+        {
+          "name": "role",
+          "location": "query",
+          "required": false,
+          "description": "Filtro por rol.",
+          "type": "string",
+          "format": null,
+          "example": "Admin",
+          "enum": []
+        },
+        {
+          "name": "email",
+          "location": "query",
+          "required": false,
+          "description": "Filtro por correo electrónico.",
+          "type": "string",
+          "format": null,
+          "example": "email.prueba@gmail.com",
+          "enum": []
+        },
+        {
+          "name": "bio_code",
+          "location": "query",
+          "required": false,
+          "description": "Filtro por código de validación biométrica.",
+          "type": "string",
+          "format": null,
+          "example": "42628",
+          "enum": []
+        },
+        {
+          "name": "phone",
+          "location": "query",
+          "required": false,
+          "description": "Filtro por número de teléfono.",
+          "type": "string",
+          "format": null,
+          "example": "1234567890",
+          "enum": []
+        },
+        {
+          "name": "name",
+          "location": "query",
+          "required": false,
+          "description": "Filtro por nombre.",
+          "type": "string",
+          "format": null,
+          "example": "Juan Pérez",
+          "enum": []
+        },
+        {
+          "name": "documentNumber",
+          "location": "query",
+          "required": false,
+          "description": "Filtro por número de documento.",
+          "type": "string",
+          "format": null,
+          "example": "123456789",
+          "enum": []
+        },
+        {
+          "name": "lastKey",
+          "location": "query",
+          "required": false,
+          "description": "Clave para paginación o siguiente bloque de resultados.",
+          "type": "string",
+          "format": null,
+          "example": "abc123def456",
+          "enum": []
+        }
+      ],
+      "requestBody": null,
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "Respuesta exitosa con el usuario o la lista de usuarios.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Parámetros de búsqueda incorrectos.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "404",
+          "description": "Usuario no encontrado.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/users/update",
+      "summary": "Actualizar información de un usuario",
+      "description": "Actualiza uno o varios campos del usuario indicado.\n\n**Estructura del Body desencriptado (referencia):**\n```json\n{\n  \"userName\": \"a4c8d4b8-d091-70a8-7497-2274ab746db1\",\n  \"userRole\": \"Admin\",\n  \"enabled\": true,\n  \"email\": \"nuevo.email@gmail.com\",\n  \"phone_number\": \"0987654321\",\n  \"custom_lastName\": \"Pérez\",\n  \"custom_firstName\": \"Juan\",\n  \"bio_code\": \"42628\",\n  \"bio_status\": \"pending\",\n  \"kyc_level\": \"essential\",\n  \"isAcceptATDP\": true\n}\n```\n",
+      "parameters": [
+        {
+          "name": "X-Ct",
+          "location": "header",
+          "required": true,
+          "description": "Token/Llave de contexto para operaciones de cifrado/descifrado.",
+          "type": "string",
+          "format": null,
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "enum": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": [
+          {
+            "contentType": "application/json",
+            "schema": {
+              "name": "EncryptedPayload",
+              "reference": "#/components/schemas/EncryptedPayload",
+              "type": "object",
+              "description": "",
+              "example": null,
+              "enum": [],
+              "required": [
+                "iv",
+                "encoded"
+              ],
+              "properties": [
+                {
+                  "name": "iv",
+                  "type": "string",
+                  "required": true,
+                  "description": "Vector de inicialización codificado.",
+                  "format": null,
+                  "example": "dGhpcyBpcyBhbiBpdiA=",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                },
+                {
+                  "name": "encoded",
+                  "type": "string",
+                  "required": true,
+                  "description": "Payload encriptado en formato Base64/String.",
+                  "format": null,
+                  "example": "U2FsdGVkX19v8+3mN3kL9y2y9...",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "Usuario actualizado correctamente.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Error al actualizar el usuario.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/users/recovery-password",
+      "summary": "Solicitar código de recuperación de contraseña",
+      "description": "Envía un código de recuperación al correo del usuario. No usa cifrado.",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": [
+          {
+            "contentType": "application/json",
+            "schema": {
+              "name": "RecoveryPasswordRequest",
+              "reference": "#/components/schemas/RecoveryPasswordRequest",
+              "type": "object",
+              "description": "",
+              "example": null,
+              "enum": [],
+              "required": [
+                "email"
+              ],
+              "properties": [
+                {
+                  "name": "email",
+                  "type": "string",
+                  "required": true,
+                  "description": "",
+                  "format": "email",
+                  "example": "usuario@example.com",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "Código enviado correctamente.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Datos inválidos o error al procesar la solicitud.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/users/recovery-password/confirm",
+      "summary": "Confirmar recuperación de contraseña",
+      "description": "Valida el código recibido y establece una nueva contraseña usando desencriptado AES/KMS.\n\n**Estructura del Body desencriptado (referencia):**\n```json\n{\n  \"email\": \"usuario@example.com\",\n  \"confirmationCode\": \"123456\",\n  \"newPassword\": \"Nuev0Password!\"\n}\n```\n",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": [
+          {
+            "contentType": "application/json",
+            "schema": {
+              "name": "EncryptedAesPayload",
+              "reference": "#/components/schemas/EncryptedAesPayload",
+              "type": "object",
+              "description": "",
+              "example": null,
+              "enum": [],
+              "required": [
+                "encryptedData"
+              ],
+              "properties": [
+                {
+                  "name": "encryptedData",
+                  "type": "string",
+                  "required": true,
+                  "description": "Cadena cifrada mediante AES KMS.",
+                  "format": null,
+                  "example": "eyJhbGciOiJBRVMiLCJjdCI6Iks4Z3dSS3lR...",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "Contraseña restablecida correctamente.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Código expirado, incorrecto o contraseña inválida.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "422",
+          "description": "Error en el formato o lectura del payload encriptado (encryptedData).",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/users/profile-picture",
+      "summary": "Obtener URL de la foto de perfil",
+      "description": "Devuelve la URL pública o asociada a la foto de perfil del usuario indicado.",
+      "parameters": [
+        {
+          "name": "X-Ct",
+          "location": "header",
+          "required": true,
+          "description": "Token/Llave de contexto para operaciones de cifrado/descifrado.",
+          "type": "string",
+          "format": null,
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "enum": []
+        },
+        {
+          "name": "email",
+          "location": "query",
+          "required": true,
+          "description": "Correo electrónico del usuario.",
+          "type": "string",
+          "format": "email",
+          "example": "usuario@example.com",
+          "enum": []
+        }
+      ],
+      "requestBody": null,
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "Foto de perfil obtenida correctamente.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ProfilePictureResponse",
+                "reference": "#/components/schemas/ProfilePictureResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "response"
+                ],
+                "properties": [
+                  {
+                    "name": "response",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": "#/components/schemas/ApiResponse",
+                    "properties": [
+                      {
+                        "name": "statusCode",
+                        "type": "integer",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": 200,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "data",
+                        "type": "object",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [
+                          {
+                            "name": "code",
+                            "type": "string",
+                            "required": true,
+                            "description": "",
+                            "format": null,
+                            "example": "US01",
+                            "enum": [],
+                            "reference": null,
+                            "properties": []
+                          },
+                          {
+                            "name": "message",
+                            "type": "string",
+                            "required": true,
+                            "description": "",
+                            "format": null,
+                            "example": "Usuario encontrado",
+                            "enum": [],
+                            "reference": null,
+                            "properties": []
+                          },
+                          {
+                            "name": "users",
+                            "type": "array",
+                            "required": false,
+                            "description": "",
+                            "format": null,
+                            "example": null,
+                            "enum": [],
+                            "reference": null,
+                            "properties": [],
+                            "items": {
+                              "name": "items",
+                              "type": "object",
+                              "required": false,
+                              "description": "",
+                              "format": null,
+                              "example": null,
+                              "enum": [],
+                              "reference": null,
+                              "properties": []
+                            }
+                          },
+                          {
+                            "name": "user",
+                            "type": "object",
+                            "required": false,
+                            "description": "",
+                            "format": null,
+                            "example": null,
+                            "enum": [],
+                            "reference": null,
+                            "properties": []
+                          },
+                          {
+                            "name": "profilePictureUrl",
+                            "type": "string",
+                            "required": false,
+                            "description": "",
+                            "format": null,
+                            "example": null,
+                            "enum": [],
+                            "reference": null,
+                            "properties": []
+                          },
+                          {
+                            "name": "presignedPostProfileImage",
+                            "type": "object",
+                            "required": false,
+                            "description": "",
+                            "format": null,
+                            "example": null,
+                            "enum": [],
+                            "reference": null,
+                            "properties": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Parámetros inválidos.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/users/profile-picture",
+      "summary": "Obtener URL temporal para subir la foto de perfil",
+      "description": "Genera una URL presignada para asignar una nueva foto de perfil.",
+      "parameters": [
+        {
+          "name": "X-Ct",
+          "location": "header",
+          "required": true,
+          "description": "Token/Llave de contexto para operaciones de cifrado/descifrado.",
+          "type": "string",
+          "format": null,
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "enum": []
+        },
+        {
+          "name": "email",
+          "location": "query",
+          "required": true,
+          "description": "Correo electrónico del usuario.",
+          "type": "string",
+          "format": "email",
+          "example": "usuario@example.com",
+          "enum": []
+        }
+      ],
+      "requestBody": null,
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "URL para la carga de la foto de perfil obtenida.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Parámetros inválidos.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/users/send-otp",
+      "summary": "Enviar código OTP al correo del usuario",
+      "description": "Envía un código OTP para validar alguna acción del usuario.\n\n**Estructura del Body desencriptado (referencia):**\n```json\n{\n  \"email\": \"usuario@example.com\"\n}\n```\n",
+      "parameters": [
+        {
+          "name": "X-Ct",
+          "location": "header",
+          "required": true,
+          "description": "Token/Llave de contexto para operaciones de cifrado/descifrado.",
+          "type": "string",
+          "format": null,
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "enum": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": [
+          {
+            "contentType": "application/json",
+            "schema": {
+              "name": "EncryptedPayload",
+              "reference": "#/components/schemas/EncryptedPayload",
+              "type": "object",
+              "description": "",
+              "example": null,
+              "enum": [],
+              "required": [
+                "iv",
+                "encoded"
+              ],
+              "properties": [
+                {
+                  "name": "iv",
+                  "type": "string",
+                  "required": true,
+                  "description": "Vector de inicialización codificado.",
+                  "format": null,
+                  "example": "dGhpcyBpcyBhbiBpdiA=",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                },
+                {
+                  "name": "encoded",
+                  "type": "string",
+                  "required": true,
+                  "description": "Payload encriptado en formato Base64/String.",
+                  "format": null,
+                  "example": "U2FsdGVkX19v8+3mN3kL9y2y9...",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "OTP enviado correctamente.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Datos inválidos.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/users/validate-otp",
+      "summary": "Validar código OTP",
+      "description": "Verifica que el código OTP recibido sea correcto.\n\n**Estructura del Body desencriptado (referencia):**\n```json\n{\n  \"email\": \"usuario@example.com\",\n  \"otp\": \"123456\"\n}\n```\n",
+      "parameters": [
+        {
+          "name": "X-Ct",
+          "location": "header",
+          "required": true,
+          "description": "Token/Llave de contexto para operaciones de cifrado/descifrado.",
+          "type": "string",
+          "format": null,
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "enum": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": [
+          {
+            "contentType": "application/json",
+            "schema": {
+              "name": "EncryptedPayload",
+              "reference": "#/components/schemas/EncryptedPayload",
+              "type": "object",
+              "description": "",
+              "example": null,
+              "enum": [],
+              "required": [
+                "iv",
+                "encoded"
+              ],
+              "properties": [
+                {
+                  "name": "iv",
+                  "type": "string",
+                  "required": true,
+                  "description": "Vector de inicialización codificado.",
+                  "format": null,
+                  "example": "dGhpcyBpcyBhbiBpdiA=",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                },
+                {
+                  "name": "encoded",
+                  "type": "string",
+                  "required": true,
+                  "description": "Payload encriptado en formato Base64/String.",
+                  "format": null,
+                  "example": "U2FsdGVkX19v8+3mN3kL9y2y9...",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "OTP validado correctamente.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Código inválido o expirado.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/users/register",
+      "summary": "Registrar un nuevo usuario",
+      "description": "Crea un usuario nuevo con sus atributos básicos y una contraseña segura. No usa cifrado.",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": [
+          {
+            "contentType": "application/json",
+            "schema": {
+              "name": "RegisterUserRequest",
+              "reference": "#/components/schemas/RegisterUserRequest",
+              "type": "object",
+              "description": "",
+              "example": null,
+              "enum": [],
+              "required": [
+                "userName",
+                "password",
+                "userAttributes"
+              ],
+              "properties": [
+                {
+                  "name": "userName",
+                  "type": "string",
+                  "required": true,
+                  "description": "Correo electrónico que se usará como nombre de usuario.",
+                  "format": "email",
+                  "example": "usuario@example.com",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                },
+                {
+                  "name": "password",
+                  "type": "string",
+                  "required": true,
+                  "description": "Contraseña con mínimo 8 caracteres, mayúscula, minúscula, número y carácter especial.",
+                  "format": "password",
+                  "example": "Nuev0Password!",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                },
+                {
+                  "name": "userAttributes",
+                  "type": "object",
+                  "required": true,
+                  "description": "",
+                  "format": null,
+                  "example": null,
+                  "enum": [],
+                  "reference": null,
+                  "properties": [
+                    {
+                      "name": "email",
+                      "type": "string",
+                      "required": true,
+                      "description": "",
+                      "format": "email",
+                      "example": "usuario@example.com",
+                      "enum": [],
+                      "reference": null,
+                      "properties": []
+                    },
+                    {
+                      "name": "phone_number",
+                      "type": "string",
+                      "required": true,
+                      "description": "",
+                      "format": null,
+                      "example": "0987654321",
+                      "enum": [],
+                      "reference": null,
+                      "properties": []
+                    },
+                    {
+                      "name": "custom_documentNumber",
+                      "type": "string",
+                      "required": true,
+                      "description": "",
+                      "format": null,
+                      "example": "12345678",
+                      "enum": [],
+                      "reference": null,
+                      "properties": []
+                    },
+                    {
+                      "name": "custom_documentType",
+                      "type": "string",
+                      "required": true,
+                      "description": "",
+                      "format": null,
+                      "example": "CI",
+                      "enum": [],
+                      "reference": null,
+                      "properties": []
+                    },
+                    {
+                      "name": "custom_firstName",
+                      "type": "string",
+                      "required": true,
+                      "description": "",
+                      "format": null,
+                      "example": "Juan",
+                      "enum": [],
+                      "reference": null,
+                      "properties": []
+                    },
+                    {
+                      "name": "custom_lastName",
+                      "type": "string",
+                      "required": true,
+                      "description": "",
+                      "format": null,
+                      "example": "Pérez",
+                      "enum": [],
+                      "reference": null,
+                      "properties": []
+                    },
+                    {
+                      "name": "custom_nickname",
+                      "type": "string",
+                      "required": true,
+                      "description": "",
+                      "format": null,
+                      "example": "juanp",
+                      "enum": [],
+                      "reference": null,
+                      "properties": []
+                    },
+                    {
+                      "name": "custom_country",
+                      "type": "string",
+                      "required": true,
+                      "description": "",
+                      "format": null,
+                      "example": "UY",
+                      "enum": [],
+                      "reference": null,
+                      "properties": []
+                    },
+                    {
+                      "name": "custom_documentCountry",
+                      "type": "string",
+                      "required": true,
+                      "description": "",
+                      "format": null,
+                      "example": "UY",
+                      "enum": [],
+                      "reference": null,
+                      "properties": []
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "Usuario registrado correctamente.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Datos inválidos o error al registrar el usuario.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/users/register/confirm",
+      "summary": "Confirmar registro de usuario",
+      "description": "Valida el código de confirmación enviado al correo del usuario registrado. No usa cifrado.",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": [
+          {
+            "contentType": "application/json",
+            "schema": {
+              "name": "ConfirmRegisterRequest",
+              "reference": "#/components/schemas/ConfirmRegisterRequest",
+              "type": "object",
+              "description": "",
+              "example": null,
+              "enum": [],
+              "required": [
+                "email",
+                "confirmationCode"
+              ],
+              "properties": [
+                {
+                  "name": "email",
+                  "type": "string",
+                  "required": true,
+                  "description": "",
+                  "format": "email",
+                  "example": "usuario@example.com",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                },
+                {
+                  "name": "confirmationCode",
+                  "type": "string",
+                  "required": true,
+                  "description": "",
+                  "format": null,
+                  "example": "123456",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "Registro confirmado correctamente.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Código de confirmación inválido o expirado.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/users/register/resend-code",
+      "summary": "Reenviar código de verificación de registro",
+      "description": "Envía nuevamente el código de confirmación para completar el registro. No usa cifrado.",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": [
+          {
+            "contentType": "application/json",
+            "schema": {
+              "name": "ResendRegisterCodeRequest",
+              "reference": "#/components/schemas/ResendRegisterCodeRequest",
+              "type": "object",
+              "description": "",
+              "example": null,
+              "enum": [],
+              "required": [
+                "email"
+              ],
+              "properties": [
+                {
+                  "name": "email",
+                  "type": "string",
+                  "required": true,
+                  "description": "",
+                  "format": "email",
+                  "example": "usuario@example.com",
+                  "enum": [],
+                  "reference": null,
+                  "properties": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "responses": [
+        {
+          "statusCode": "200",
+          "description": "Código reenviado correctamente.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ApiResponse",
+                "reference": "#/components/schemas/ApiResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 200,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "US01",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Usuario encontrado",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "users",
+                        "type": "array",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": [],
+                        "items": {
+                          "name": "items",
+                          "type": "object",
+                          "required": false,
+                          "description": "",
+                          "format": null,
+                          "example": null,
+                          "enum": [],
+                          "reference": null,
+                          "properties": []
+                        }
+                      },
+                      {
+                        "name": "user",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "profilePictureUrl",
+                        "type": "string",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "presignedPostProfileImage",
+                        "type": "object",
+                        "required": false,
+                        "description": "",
+                        "format": null,
+                        "example": null,
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "statusCode": "400",
+          "description": "Datos inválidos o error al reenviar el código.",
+          "content": [
+            {
+              "contentType": "application/json",
+              "schema": {
+                "name": "ErrorResponse",
+                "reference": "#/components/schemas/ErrorResponse",
+                "type": "object",
+                "description": "",
+                "example": null,
+                "enum": [],
+                "required": [
+                  "statusCode",
+                  "data"
+                ],
+                "properties": [
+                  {
+                    "name": "statusCode",
+                    "type": "integer",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": 400,
+                    "enum": [],
+                    "reference": null,
+                    "properties": []
+                  },
+                  {
+                    "name": "data",
+                    "type": "object",
+                    "required": true,
+                    "description": "",
+                    "format": null,
+                    "example": null,
+                    "enum": [],
+                    "reference": null,
+                    "properties": [
+                      {
+                        "name": "code",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "UE03",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      },
+                      {
+                        "name": "message",
+                        "type": "string",
+                        "required": true,
+                        "description": "",
+                        "format": null,
+                        "example": "Error al actualizar el usuario",
+                        "enum": [],
+                        "reference": null,
+                        "properties": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
