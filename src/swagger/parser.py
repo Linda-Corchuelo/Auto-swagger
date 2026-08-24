@@ -58,10 +58,9 @@ def resolve_reference(document, reference):
 
     return current
 
-
-# ============================================================
+ 
 # NOMBRE DEL $REF
-# ============================================================
+
 
 def get_reference_name(reference):
     """
@@ -122,18 +121,10 @@ def extract_example(data):
 
     if not isinstance(data, dict):
         return None
-
-    # --------------------------------------------------------
-    # example directo
-    # --------------------------------------------------------
-
+    
     if "example" in data:
         return data["example"]
-
-    # --------------------------------------------------------
-    # examples
-    # --------------------------------------------------------
-
+    
     examples = data.get("examples")
 
     if isinstance(examples, dict) and examples:
@@ -210,21 +201,15 @@ def parse_property(
 
     if visited_refs is None:
         visited_refs = set()
-
-    # --------------------------------------------------------
-    # Referencia
-    # --------------------------------------------------------
-
+        
     reference = schema.get("$ref")
 
     resolved_schema = schema
 
     if reference and document:
-
-        # ----------------------------------------------------
+        
         # Evitar ciclos
-        # ----------------------------------------------------
-
+        
         if reference in visited_refs:
 
             return SchemaProperty(
@@ -247,21 +232,14 @@ def parse_property(
             resolved_schema = dict(
                 resolved
             )
-
-            # ------------------------------------------------
-            # Conservar propiedades adicionales del schema
-            # original.
-            # ------------------------------------------------
-
+            
             for key, value in schema.items():
 
                 if key != "$ref":
                     resolved_schema[key] = value
-
-    # --------------------------------------------------------
+                    
     # Tipo
-    # --------------------------------------------------------
-
+    
     property_type = resolved_schema.get(
         "type",
         "object",
@@ -806,10 +784,12 @@ def parse_parameters(
 # PARSE ENDPOINTS
 # ============================================================
 
-def parse_endpoints(document):
+def parse_endpoints(document, filter_paths=None):
     """
-    Convierte los paths del Swagger
-    en objetos Endpoint.
+    Convierte los paths del Swagger en objetos Endpoint.
+
+    Si se proporciona `filter_paths`, solo se incluirán los endpoints
+    cuyo path coincida exactamente o sea un subpath de los indicados.
     """
 
     endpoints = []
@@ -836,6 +816,15 @@ def parse_endpoints(document):
             dict,
         ):
             continue
+
+        # Filtrar por paths configurados si aplica
+        if filter_paths:
+            matches = any(
+                path == fp or path.startswith(fp.rstrip("/") + "/")
+                for fp in filter_paths
+            )
+            if not matches:
+                continue
 
         # ====================================================
         # METHODS
@@ -1042,3 +1031,63 @@ def parse_endpoints(document):
             )
 
     return endpoints
+
+
+# ============================================================
+# UTILIDADES DE SCHEMA
+# ============================================================
+
+def flatten_schema(schema, prefix=""):
+    """
+    Convierte un schema anidado en una lista plana de propiedades.
+
+    Útil para generar tablas o reportes lineales.
+    """
+    result = []
+    properties = getattr(schema, "properties", [])
+
+    for prop in properties:
+        prop_name = f"{prefix}.{prop.name}" if prefix else prop.name
+
+        flattened_prop = SchemaProperty(
+            name=prop_name,
+            type=prop.type,
+            required=prop.required,
+            description=getattr(prop, "description", ""),
+            format=getattr(prop, "format", None),
+            example=getattr(prop, "example", None),
+            enum=getattr(prop, "enum", []),
+            reference=getattr(prop, "reference", None),
+            properties=getattr(prop, "properties", []),
+            items=getattr(prop, "items", None),
+        )
+        result.append(flattened_prop)
+
+        if getattr(prop, "properties", None):
+            result.extend(flatten_schema(prop, prop_name))
+
+    return result
+
+
+def print_schema_tree(schema, level=0):
+    """
+    Imprime el árbol jerárquico de un schema en consola,
+    soportando objetos y arrays anidados.
+    """
+    indent = "    " * level
+    properties = getattr(schema, "properties", [])
+
+    for prop in properties:
+        required = "Sí" if prop.required else "No"
+        print(f"{indent}- {prop.name} | tipo: {prop.type} | requerido: {required}")
+
+        if getattr(prop, "properties", None):
+            print(f"{indent}  Propiedades:")
+            print_schema_tree(prop, level + 2)
+
+        if getattr(prop, "items", None):
+            print(f"{indent}  Items:")
+            item_type = getattr(prop.items, "type", "object")
+            print(f"{indent}    - tipo: {item_type}")
+            if getattr(prop.items, "properties", None):
+                print_schema_tree(prop.items, level + 3)

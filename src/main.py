@@ -1,8 +1,12 @@
-from config import SWAGGER_URL
+from config import (
+    SWAGGER_URL,
+    OUTPUT_DIR,
+    ENDPOINTS_TO_DOCUMENT,
+    WORD_TEMPLATE,
+)
 
-from swagger.reader import load_from_url
-from swagger.parser import parse_endpoints
-from swagger.schema_parser import print_schema_tree
+from swagger.reader import load_document
+from swagger.parser import parse_endpoints, print_schema_tree
 from swagger.exporter import export_endpoints
 from generator.word_generator import generate_word
 
@@ -12,24 +16,18 @@ def print_endpoint_detail(endpoint):
     print("\n" + "=" * 70)
     print(f"{endpoint.method} {endpoint.path}")
     print("=" * 70)
-
-    # ========================================================
+    
     # INFORMACIÓN GENERAL
-    # ========================================================
-
+    
     print(f"Método: {endpoint.method}")
     print(f"Ruta: {endpoint.path}")
     print(f"Resumen: {endpoint.summary}")
 
     if endpoint.description:
-        print(
-            f"Descripción: {endpoint.description}"
-        )
-
-    # ========================================================
+        print( f"Descripción: {endpoint.description}")
+        
     # PARÁMETROS
-    # ========================================================
-
+    
     print("\nParámetros:")
 
     if endpoint.parameters:
@@ -39,63 +37,51 @@ def print_endpoint_detail(endpoint):
             required = (
                 "Sí"
                 if parameter.required
-                else "No"
-            )
+                else "No")
 
             print(
                 f" - {parameter.name}"
                 f" | ubicación: {parameter.location}"
-                f" | requerido: {required}"
-            )
+                f" | requerido: {required}")
 
             schema = getattr(
                 parameter,
                 "schema",
-                {}
-            )
+                {})
 
             if isinstance(schema, dict):
 
                 print(
                     f"   Tipo: "
-                    f"{schema.get('type', 'string')}"
-                )
+                    f"{schema.get('type', 'string')}" )
 
                 if schema.get("format"):
                     print(
                         f"   Formato: "
-                        f"{schema.get('format')}"
-                    )
+                        f"{schema.get('format')}" )
 
                 if schema.get("example") is not None:
                     print(
                         f"   Example: "
-                        f"{schema.get('example')}"
-                    )
+                        f"{schema.get('example')}" )
 
                 if schema.get("enum"):
                     print(
                         f"   Enum: "
-                        f"{schema.get('enum')}"
-                    )
+                        f"{schema.get('enum')}" )
 
             if parameter.description:
 
                 print(
                     f"   Descripción: "
-                    f"{parameter.description}"
-                )
+                    f"{parameter.description}" )
 
     else:
 
-        print(
-            " - No tiene parámetros"
-        )
-
-    # ========================================================
+        print( " - No tiene parámetros" )
+        
     # REQUEST BODY
-    # ========================================================
-
+    
     print("\nRequest Body:")
 
     if endpoint.request_body:
@@ -271,39 +257,23 @@ def print_endpoint_detail(endpoint):
 
 
 def main():
+    
+    # 1. CARGAR SWAGGER / OPENAPI
+    print("Cargando especificación...")
+    print(f"Origen: {SWAGGER_URL}")
 
-    # ========================================================
-    # 1. CARGAR SWAGGER
-    # ========================================================
+    document = load_document(SWAGGER_URL)
+    print("\nEspecificación OpenAPI cargada correctamente.")
 
-    print(
-        "Cargando Swagger..."
-    )
-
-    print(
-        f"URL: {SWAGGER_URL}"
-    )
-
-    document = load_from_url(
-        SWAGGER_URL
-    )
-
-    print(
-        "\nSwagger cargado correctamente."
-    )
-
-    # ========================================================
+    
     # 2. INFORMACIÓN GENERAL
-    # ========================================================
-
+    
     info = document.get(
         "info",
         {}
     )
 
-    print(
-        "\nInformación general:"
-    )
+    print("\nInformación general:")
 
     print(
         f"Título: "
@@ -319,102 +289,67 @@ def main():
         f"OpenAPI: "
         f"{document.get('openapi')}"
     )
-
-    # ========================================================
+    
     # 3. PARSEAR ENDPOINTS
-    # ========================================================
-
-    print(
-        "\nParseando endpoints..."
-    )
+    
+    print("\nParseando endpoints...")
+    if ENDPOINTS_TO_DOCUMENT:
+        print(f"Filtro activo de endpoints: {ENDPOINTS_TO_DOCUMENT}")
 
     endpoints = parse_endpoints(
-        document
+        document,
+        filter_paths=ENDPOINTS_TO_DOCUMENT
     )
 
     print(
         f"\nEndpoints encontrados: "
-        f"{len(endpoints)}"
-    )
+        f"{len(endpoints)}")
 
     for endpoint in endpoints:
 
         print(
             f" - "
             f"{endpoint.method} "
-            f"{endpoint.path}"
-        )
-
-    # ========================================================
+            f"{endpoint.path}")
+        
     # 4. DETALLE DE TODOS LOS ENDPOINTS
-    # ========================================================
-
-    print(
-        "\n" + "#" * 70
-    )
-
-    print(
-        "# DETALLE DE TODOS LOS ENDPOINTS"
-    )
-
-    print(
-        "#" * 70
-    )
+    
+    print( "\n" + "#" * 70)
+    print("# DETALLE DE TODOS LOS ENDPOINTS")
+    print( "#" * 70)
 
     for endpoint in endpoints:
 
-        print_endpoint_detail(
-            endpoint
-        )
-
-    # ========================================================
+        print_endpoint_detail(endpoint)
+        
     # 5. EXPORTAR JSON
-    # ========================================================
+    
+    output_json_path = OUTPUT_DIR / "swagger_output.json"
 
-    print(
-        "\n" + "#" * 70
-    )
-
-    print(
-        "# EXPORTANDO JSON"
-    )
-
-    print(
-        "#" * 70
-    )
+    print("\n" + "#" * 70)
+    print( "# EXPORTANDO JSON")
+    print( "#" * 70)
 
     export_endpoints(
         endpoints,
         document,
-        "swagger_output.json"
-    )
-
-    # ========================================================
+        output_file=str(output_json_path))
+    
     # 6. GENERAR WORD
-    # ========================================================
+    output_docx_path = OUTPUT_DIR / "documentacion_api.docx"
 
-    print(
-        "\n" + "#" * 70
-    )
+    print("\n" + "#" * 70)
 
-    print(
-        "# GENERANDO DOCUMENTACIÓN WORD"
-    )
+    print( "# GENERANDO DOCUMENTACIÓN WORD")
 
-    print(
-        "#" * 70
-    )
+    print( "#" * 70)
 
     generate_word(
         endpoints=endpoints,
         document_data=document,
-        output="documentacion_api.docx"
-    )
+        output=str(output_docx_path))
 
-    print(
-        "\nProceso terminado correctamente."
-    )
-
+    print( "\nProceso terminado correctamente." )
 
 if __name__ == "__main__":
-    main()
+    main()
