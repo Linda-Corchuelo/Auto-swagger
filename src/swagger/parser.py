@@ -174,6 +174,7 @@ def parse_property(
     required=False,
     document=None,
     visited_refs=None,
+    is_encrypted=False,
 ):
     """
     Convierte una propiedad Swagger/OpenAPI
@@ -192,6 +193,9 @@ def parse_property(
 
     Además evita ciclos infinitos provocados
     por referencias circulares.
+
+    Si is_encrypted es True (o el $ref contiene "encrypted"),
+    todas las propiedades hijas se marcan como encriptadas.
     """
 
     if schema is None:
@@ -203,6 +207,9 @@ def parse_property(
         visited_refs = set()
         
     reference = schema.get("$ref")
+
+    if reference and "encrypted" in reference.lower():
+        is_encrypted = True
 
     resolved_schema = schema
 
@@ -274,6 +281,22 @@ def parse_property(
             "format"
         ),
 
+        min_length=resolved_schema.get(
+            "minLength"
+        ),
+
+        max_length=resolved_schema.get(
+            "maxLength"
+        ),
+
+        minimum=resolved_schema.get(
+            "minimum"
+        ),
+
+        maximum=resolved_schema.get(
+            "maximum"
+        ),
+
         example=example,
 
         enum=resolved_schema.get(
@@ -282,11 +305,9 @@ def parse_property(
         ),
 
         reference=reference,
-    )
 
-    # ========================================================
-    # OBJECT PROPERTIES
-    # ========================================================
+        is_encrypted=is_encrypted,
+    )
 
     properties = resolved_schema.get(
         "properties",
@@ -318,6 +339,8 @@ def parse_property(
                 document=document,
 
                 visited_refs=visited_refs,
+
+                is_encrypted=is_encrypted,
             )
 
             property_info.properties.append(
@@ -347,6 +370,8 @@ def parse_property(
                 document=document,
 
                 visited_refs=visited_refs,
+
+                is_encrypted=is_encrypted,
             )
 
     return property_info
@@ -365,6 +390,9 @@ def parse_schema(
     """
     Convierte un schema completo de OpenAPI
     en SchemaInfo.
+
+    Detecta automáticamente si el $ref contiene "encrypted"
+    y propaga is_encrypted a todas las propiedades hijas.
 
     Conserva:
 
@@ -392,6 +420,11 @@ def parse_schema(
     schema_reference = (
         reference
         or schema.get("$ref")
+    )
+
+    is_encrypted = bool(
+        schema_reference
+        and "encrypted" in schema_reference.lower()
     )
 
     resolved_schema = schema
@@ -461,6 +494,8 @@ def parse_schema(
                 ),
 
                 document=document,
+
+                is_encrypted=is_encrypted,
             )
 
             properties.append(
@@ -748,6 +783,10 @@ def parse_parameters(
         # Crear ParameterInfo
         # ----------------------------------------------------
 
+        parameter_schema_ref = parameter_schema.get(
+            "$ref"
+        )
+
         parameter_info = ParameterInfo(
 
             name=parameter.get(
@@ -771,6 +810,8 @@ def parse_parameters(
             ),
 
             schema=parameter_schema,
+
+            reference=parameter_schema_ref,
         )
 
         result.append(
@@ -1055,6 +1096,10 @@ def flatten_schema(schema, prefix=""):
             required=prop.required,
             description=getattr(prop, "description", ""),
             format=getattr(prop, "format", None),
+            min_length=getattr(prop, "min_length", None),
+            max_length=getattr(prop, "max_length", None),
+            minimum=getattr(prop, "minimum", None),
+            maximum=getattr(prop, "maximum", None),
             example=getattr(prop, "example", None),
             enum=getattr(prop, "enum", []),
             reference=getattr(prop, "reference", None),
@@ -1062,6 +1107,7 @@ def flatten_schema(schema, prefix=""):
             items=getattr(prop, "items", None),
         )
         result.append(flattened_prop)
+
 
         if getattr(prop, "properties", None):
             result.extend(flatten_schema(prop, prop_name))

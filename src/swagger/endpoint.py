@@ -28,6 +28,8 @@ class ParameterInfo:
 
     schema: Optional[Dict[str, Any]] = None
 
+    reference: Optional[str] = None
+
     @property
     def type(self) -> Optional[str]:
         """
@@ -84,6 +86,34 @@ class ParameterInfo:
             []
         )
 
+    @property
+    def size(self) -> str:
+        """
+        Obtiene el tamaño/formato real del parámetro a partir del schema.
+        """
+        if not self.schema:
+            return "-"
+
+        min_len = self.schema.get("minLength")
+        max_len = self.schema.get("maxLength")
+        min_val = self.schema.get("minimum")
+        max_val = self.schema.get("maximum")
+        fmt = self.schema.get("format")
+
+        if min_len is not None and max_len is not None:
+            return f"{min_len} - {max_len}"
+        if max_len is not None:
+            return str(max_len)
+        if min_len is not None:
+            return f"Mín. {min_len}"
+        if min_val is not None and max_val is not None:
+            return f"{min_val} - {max_val}"
+        if max_val is not None:
+            return f"Máx. {max_val}"
+        if fmt:
+            return str(fmt)
+        return "-"
+
 
 # ============================================================
 # SCHEMA PROPERTY
@@ -94,12 +124,6 @@ class SchemaProperty:
     """
     Representa una propiedad dentro
     de un schema OpenAPI.
-
-    Ejemplo:
-
-        data
-            ├── code
-            └── message
     """
 
     name: str
@@ -111,6 +135,14 @@ class SchemaProperty:
     description: str = ""
 
     format: Optional[str] = None
+
+    min_length: Optional[int] = None
+
+    max_length: Optional[int] = None
+
+    minimum: Optional[Any] = None
+
+    maximum: Optional[Any] = None
 
     example: Any = None
 
@@ -125,6 +157,28 @@ class SchemaProperty:
     )
 
     items: Optional["SchemaProperty"] = None
+
+    is_encrypted: bool = False
+
+    @property
+    def size(self) -> str:
+        """
+        Obtiene el tamaño o longitud real de la propiedad.
+        """
+        if self.min_length is not None and self.max_length is not None:
+            return f"{self.min_length} - {self.max_length}"
+        if self.max_length is not None:
+            return str(self.max_length)
+        if self.min_length is not None:
+            return f"Mín. {self.min_length}"
+        if self.minimum is not None and self.maximum is not None:
+            return f"{self.minimum} - {self.maximum}"
+        if self.maximum is not None:
+            return f"Máx. {self.maximum}"
+        if self.format:
+            return str(self.format)
+        return "-"
+
 
 
 # ============================================================
