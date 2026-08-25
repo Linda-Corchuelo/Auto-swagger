@@ -532,26 +532,20 @@ def add_endpoint_section(
     endpoint_summary = endpoint.summary or endpoint_slug
 
     if is_template:
-        # La plantilla corporativa numera automáticamente los encabezados:
-        # Heading 2 -> "3.1", "3.2" ...  Heading 3 -> "3.1.1", "3.1.2" ...
-        # Solo ponemos el texto limpio SIN prefijo numérico.
         h2_title = f"Endpoint {endpoint_slug} ({endpoint_summary})"
         h3_params       = "Parámetros de entrada"
         h3_ejemplo_in   = "Ejemplo JSON de entrada"
-        h3_respuesta    = "Respuesta"
         h3_ejemplo_out  = "Ejemplo JSON de salida"
-        h3_ejemplo_err  = "Ejemplo JSON de error"
+        h3_respuesta    = "Respuesta"
         h3_status       = "Valores para el atributo de statusCode"
     else:
-        # Documento standalone: numeramos manualmente con prefijo "1.x"
         chapter_prefix = "1"
         h2_title        = f"{chapter_prefix}.{index} Endpoint {endpoint_slug} ({endpoint_summary})"
         h3_params       = f"{chapter_prefix}.{index}.1 Parámetros de entrada"
         h3_ejemplo_in   = f"{chapter_prefix}.{index}.2 Ejemplo JSON de entrada"
-        h3_respuesta    = f"{chapter_prefix}.{index}.3 Respuesta"
-        h3_ejemplo_out  = f"{chapter_prefix}.{index}.4 Ejemplo JSON de salida"
-        h3_ejemplo_err  = f"{chapter_prefix}.{index}.5 Ejemplo JSON de error"
-        h3_status       = f"{chapter_prefix}.{index}.6 Valores para el atributo de statusCode"
+        h3_ejemplo_out  = f"{chapter_prefix}.{index}.3 Ejemplo JSON de salida"
+        h3_respuesta    = f"{chapter_prefix}.{index}.4 Respuesta"
+        h3_status       = f"{chapter_prefix}.{index}.5 Valores para el atributo de statusCode"
 
 
     # ── Título del Endpoint (Heading 2)
@@ -611,32 +605,20 @@ def add_endpoint_section(
         sample_input = generate_sample_json(first_rb_content)
         add_code_block(document, sample_input)
 
-    # ── Respuesta (Heading 3)
-    document.add_heading(h3_respuesta, level=3)
-    document.add_paragraph("Información del JSON de respuesta correspondiente a la operación del endpoint:")
-
+    # ── Respuesta: buscar schemas de éxito y error
     success_response = next(
         (r for r in endpoint.responses if r.status_code.startswith("2") and r.content),
         None,
     ) or next((r for r in endpoint.responses if r.content), None)
 
+    resp_schema = None
     if success_response and success_response.content:
-        p_main = document.add_paragraph()
-        r_bullet = p_main.add_run("· Respuesta exitosa")
-        r_bullet.bold = True
         resp_schema = next(iter(success_response.content.values()))
-        add_schema_properties_table(document, resp_schema)
 
     error_response = next(
         (r for r in endpoint.responses if (r.status_code.startswith("4") or r.status_code.startswith("5")) and r.content),
         None,
     )
-    if error_response and error_response.content:
-        p_err = document.add_paragraph()
-        r_err_bullet = p_err.add_run("· En caso de error")
-        r_err_bullet.bold = True
-        err_schema = next(iter(error_response.content.values()))
-        add_schema_properties_table(document, err_schema)
 
     # ── Ejemplo JSON de salida (Heading 3)
     if success_response and success_response.content:
@@ -644,6 +626,23 @@ def add_endpoint_section(
         document.add_paragraph("Ejemplo de respuesta obtenida del endpoint:")
         sample_output = generate_sample_json(resp_schema)
         add_code_block(document, sample_output)
+
+    # ── Respuesta (Heading 3)
+    document.add_heading(h3_respuesta, level=3)
+    document.add_paragraph("Información del JSON de respuesta correspondiente a la operación del endpoint:")
+
+    if resp_schema:
+        p_main = document.add_paragraph()
+        r_bullet = p_main.add_run("· Respuesta exitosa")
+        r_bullet.bold = True
+        add_schema_properties_table(document, resp_schema)
+
+    if error_response and error_response.content:
+        p_err = document.add_paragraph()
+        r_err_bullet = p_err.add_run("· En caso de error")
+        r_err_bullet.bold = True
+        err_schema = next(iter(error_response.content.values()))
+        add_schema_properties_table(document, err_schema)
 
     # ── Valores para el atributo de statusCode (Heading 3)
     document.add_heading(h3_status, level=3)
