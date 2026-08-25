@@ -36,7 +36,7 @@ TABLE_5_COL_WIDTHS = [
     3.30 / 2.54,
     3.57 / 2.54,
     4.00 / 2.54,
-    4.00 / 2.54,
+    4.50 / 2.54,
 ]
 # ============================================================
 # UTILIDADES DE FORMATO WORD
@@ -359,9 +359,11 @@ def add_parameters_table(document, parameters: List[Any]) -> None:
     for cell, header in zip(table.rows[0].cells, headers):
         cell.text = header
         set_cell_text_bold(cell)
-        set_cell_shading(cell, "D9EAF7")
+        set_cell_shading(cell, "000000")
         cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-
+        for paragraph in cell.paragraphs:
+            for run in paragraph.runs:
+                run.font.color.rgb = RGBColor(255, 255, 255)
     for parameter in parameters:
         row = table.add_row().cells
         row[0].text = parameter.name
@@ -391,6 +393,8 @@ def collect_schema_rows(properties: List[Any], prefix: str = "") -> List[Dict[st
                 desc = "Código interno de respuesta del servicio."
             elif "user" in p_lower:
                 desc = "Objeto con los datos del usuario."
+            elif "users" in p_lower:
+                desc = "Lista de usuarios."
             elif "data" in p_lower:
                 desc = "Objeto con la información registrada/actualizada"
             elif "email" in p_lower:
@@ -442,9 +446,11 @@ def add_schema_properties_table(document, schema: Any) -> None:
     for cell, header in zip(table.rows[0].cells, headers):
         cell.text = header
         set_cell_text_bold(cell)
-        set_cell_shading(cell, "D9EAF7")
+        set_cell_shading(cell, "000000")
         cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-
+        for paragraph in cell.paragraphs:
+            for run in paragraph.runs:
+                run.font.color.rgb = RGBColor(255, 255, 255)
     for row_info in rows_data:
         row = table.add_row().cells
         row[0].text = row_info["name"]
@@ -469,9 +475,11 @@ def add_status_code_table(document, responses: List[Any]) -> None:
     for cell, header in zip(table.rows[0].cells, headers):
         cell.text = header
         set_cell_text_bold(cell)
-        set_cell_shading(cell, "D9EAF7")
+        set_cell_shading(cell, "000000")
         cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-
+        for paragraph in cell.paragraphs:
+            for run in paragraph.runs:
+                run.font.color.rgb = RGBColor(255, 255, 255)
     # Extraer códigos definidos en el Swagger
     rendered_codes = {}
     for resp in (responses or []):
@@ -808,7 +816,10 @@ def generate_word(
             row.cells[0].text = k
             row.cells[1].text = str(v)
             set_cell_text_bold(row.cells[0])
-            set_cell_shading(row.cells[0], "D9EAF7")
+            set_cell_shading(row.cells[0], "000000")
+            for paragraph in row.cells[0].paragraphs:
+                for run in paragraph.runs:
+                    run.font.color.rgb = RGBColor(255, 255, 255)
         document.add_paragraph()
 
         document.add_heading("2. Operaciones del Servicio", level=1)

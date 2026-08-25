@@ -51,6 +51,10 @@ PARAMETER_CONFIG = {
         "min": 0,
         "max": 100,
     },
+    "user": {
+        "type": "object",
+        "size": "---",
+     },
     "profilePictureUrl": {
         "type": "string",
         "min": 1,
