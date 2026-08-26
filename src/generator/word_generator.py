@@ -39,6 +39,37 @@ TABLE_5_COL_WIDTHS = [
     4.50 / 2.54,
 ]
 # ============================================================
+# CONFIGURACIÓN DE ESTILOS DEL DOCUMENTO
+# ============================================================
+
+def _configure_document_styles(document) -> None:
+    """
+    Configura tipografía Arial, interlineado 1.15 y espaciado
+    de 6pt después de cada párrafo para todo el documento.
+    """
+    styles = document.styles
+
+    # ── Estilo Normal (base de todo el documento)
+    normal = styles["Normal"]
+    normal.font.name = "Arial"
+    normal.font.size = Pt(11)
+    pf = normal.paragraph_format
+    pf.line_spacing = 1.15
+    pf.space_after = Pt(6)
+    pf.space_before = Pt(0)
+
+    # ── Estilos de encabezado heredan Arial
+    for level in range(1, 5):
+        style_name = f"Heading {level}"
+        if style_name in styles:
+            heading = styles[style_name]
+            heading.font.name = "Arial"
+            heading.paragraph_format.line_spacing = 1.15
+            heading.paragraph_format.space_after = Pt(6)
+            heading.paragraph_format.space_before = Pt(12)
+
+
+# ============================================================
 # UTILIDADES DE FORMATO WORD
 # ============================================================
 
@@ -391,10 +422,10 @@ def collect_schema_rows(properties: List[Any], prefix: str = "") -> List[Dict[st
                 desc = "Mensaje descriptivo del resultado de la operación."
             elif "code" in p_lower:
                 desc = "Código interno de respuesta del servicio."
-            elif "user" in p_lower:
-                desc = "Objeto con los datos del usuario."
             elif "users" in p_lower:
                 desc = "Lista de usuarios."
+            elif "user" in p_lower:
+                desc = "Objeto con los datos del usuario."
             elif "data" in p_lower:
                 desc = "Objeto con la información registrada/actualizada"
             elif "email" in p_lower:
@@ -775,6 +806,7 @@ def generate_word(
     if use_template:
         print(f"Usando plantilla corporativa: {template_file}")
         document = Document(str(template_file))
+        _configure_document_styles(document)
         update_template_metadata(document, document_data)
         clean_template_dummy_elements(document)
 
@@ -789,6 +821,7 @@ def generate_word(
     else:
         print("Generando documento independiente desde cero...")
         document = Document()
+        _configure_document_styles(document)
 
         section = document.sections[0]
         section.top_margin = Inches(0.7)
