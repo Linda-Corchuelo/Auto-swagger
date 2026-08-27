@@ -418,8 +418,28 @@ def collect_schema_rows(properties: List[Any], prefix: str = "") -> List[Dict[st
             p_lower = prop.name.lower()
             if "statuscode" in p_lower:
                 desc = "Código de estado HTTP de la operación."
+            elif "profilepictureurl" in p_lower:
+                desc = "URL de la imagen de perfil del usuario."
+            elif "presignedpostprofileimage" in p_lower:
+                desc = "Datos necesarios para cargar la imagen de perfil."
             elif "message" in p_lower:
                 desc = "Mensaje descriptivo del resultado de la operación."
+            elif "phone_number" in p_lower:
+                desc = "Número de teléfono en formato internacional (E.164)."
+            elif "custom_documentnumber" in p_lower:
+                desc = "Número de documento de identificación del usuario."
+            elif "custom_documenttype" in p_lower:
+                desc = "Tipo de documento de identificación del usuario."
+            elif "custom_firstname" in p_lower:
+                desc = "Nombre del usuario."
+            elif "custom_lastname" in p_lower:
+                desc = "Apellido del usuario."
+            elif "custom_nickname" in p_lower:
+                desc = "Nombre o alias utilizado para identificar al usuario."
+            elif "custom_country" in p_lower:
+                desc = "País asociado al usuario."
+            elif "custom_documentcountry" in p_lower:
+                desc = "País de emisión del documento de identificación del usuario."
             elif "code" in p_lower:
                 desc = "Código interno de respuesta del servicio."
             elif "users" in p_lower:
@@ -427,13 +447,13 @@ def collect_schema_rows(properties: List[Any], prefix: str = "") -> List[Dict[st
             elif "user" in p_lower:
                 desc = "Objeto con los datos del usuario."
             elif "data" in p_lower:
-                desc = "Objeto con la información registrada/actualizada"
+                desc = "Objeto con la información registrada o actualizada."
             elif "email" in p_lower:
                 desc = "Correo electrónico registrado del usuario."
             elif "phone" in p_lower:
                 desc = "Número de teléfono en formato internacional (E.164)."
             elif "document" in p_lower:
-                desc = "Número o tipo de documento del usuario."
+                desc = "Número de documento del usuario."
             elif "username" in p_lower:
                 desc = "Identificador único del usuario (UUID)."
             else:
@@ -563,21 +583,24 @@ def add_endpoint_section(
     endpoint_summary = endpoint.summary or endpoint_slug
 
     if is_template:
+        # La plantilla corporativa numera automáticamente los encabezados:
+        # Heading 2 -> "3.1", "3.2" ...  Heading 3 -> "3.1.1", "3.1.2" ...
+        # Solo ponemos el texto limpio SIN prefijo numérico.
         h2_title = f"Endpoint {endpoint_slug} ({endpoint_summary})"
         h3_params       = "Parámetros de entrada"
         h3_ejemplo_in   = "Ejemplo JSON de entrada"
-        h3_ejemplo_out  = "Ejemplo JSON de salida"
         h3_respuesta    = "Respuesta"
+        h3_ejemplo_out  = "Ejemplo JSON de salida"
         h3_status       = "Valores para el atributo de statusCode"
     else:
+        # Documento standalone: numeramos manualmente con prefijo "1.x"
         chapter_prefix = "1"
         h2_title        = f"{chapter_prefix}.{index} Endpoint {endpoint_slug} ({endpoint_summary})"
         h3_params       = f"{chapter_prefix}.{index}.1 Parámetros de entrada"
         h3_ejemplo_in   = f"{chapter_prefix}.{index}.2 Ejemplo JSON de entrada"
-        h3_ejemplo_out  = f"{chapter_prefix}.{index}.3 Ejemplo JSON de salida"
-        h3_respuesta    = f"{chapter_prefix}.{index}.4 Respuesta"
+        h3_respuesta    = f"{chapter_prefix}.{index}.3 Respuesta"
+        h3_ejemplo_out  = f"{chapter_prefix}.{index}.4 Ejemplo JSON de salida"
         h3_status       = f"{chapter_prefix}.{index}.5 Valores para el atributo de statusCode"
-
 
     # ── Título del Endpoint (Heading 2)
     document.add_heading(h2_title, level=2)
@@ -586,7 +609,24 @@ def add_endpoint_section(
     p_obj = document.add_paragraph()
     r_obj_title = p_obj.add_run("Objetivo: ")
     r_obj_title.bold = True
-    obj_text = endpoint.description or f"Petición encargada de realizar las acciones de {endpoint_summary.lower()}."
+
+    if endpoint.description:
+        description_parts = endpoint.description.split(".", 1)
+
+        obj_text = description_parts[0].strip() + "."
+
+        remaining_description = (
+            description_parts[1].strip()
+            if len(description_parts) > 1
+            else ""
+        )
+    else:
+        obj_text = (
+            f"Petición encargada de realizar las acciones de "
+            f"{endpoint_summary.lower()}."
+        )
+        remaining_description = ""
+
     p_obj.add_run(obj_text)
 
     # ── Método
@@ -635,39 +675,32 @@ def add_endpoint_section(
         document.add_paragraph("Ejemplo correspondiente al consumo del endpoint:")
         sample_input = generate_sample_json(first_rb_content)
         add_code_block(document, sample_input)
-
-    # ── Respuesta: buscar schemas de éxito y error
-    success_response = next(
-        (r for r in endpoint.responses if r.status_code.startswith("2") and r.content),
-        None,
-    ) or next((r for r in endpoint.responses if r.content), None)
-
-    resp_schema = None
-    if success_response and success_response.content:
-        resp_schema = next(iter(success_response.content.values()))
-
-    error_response = next(
-        (r for r in endpoint.responses if (r.status_code.startswith("4") or r.status_code.startswith("5")) and r.content),
-        None,
-    )
-
-    # ── Ejemplo JSON de salida (Heading 3)
-    if success_response and success_response.content:
-        document.add_heading(h3_ejemplo_out, level=3)
-        document.add_paragraph("Ejemplo de respuesta obtenida del endpoint:")
-        sample_output = generate_sample_json(resp_schema)
-        add_code_block(document, sample_output)
+        
+        # ── Estructura del Body desencriptado
+    if remaining_description:
+        document.add_heading("Ejemplo de la estructura del Body desencriptado",level=3)
+        document.add_paragraph(remaining_description)
 
     # ── Respuesta (Heading 3)
     document.add_heading(h3_respuesta, level=3)
     document.add_paragraph("Información del JSON de respuesta correspondiente a la operación del endpoint:")
 
-    if resp_schema:
+    success_response = next(
+        (r for r in endpoint.responses if r.status_code.startswith("2") and r.content),
+        None,
+    ) or next((r for r in endpoint.responses if r.content), None)
+    
+    if success_response and success_response.content:
         p_main = document.add_paragraph()
         r_bullet = p_main.add_run("· Respuesta exitosa")
         r_bullet.bold = True
+        resp_schema = next(iter(success_response.content.values()))
         add_schema_properties_table(document, resp_schema)
 
+    error_response = next(
+        (r for r in endpoint.responses if (r.status_code.startswith("4") or r.status_code.startswith("5")) and r.content),
+        None,
+    )
     if error_response and error_response.content:
         p_err = document.add_paragraph()
         r_err_bullet = p_err.add_run("· En caso de error")
@@ -675,14 +708,20 @@ def add_endpoint_section(
         err_schema = next(iter(error_response.content.values()))
         add_schema_properties_table(document, err_schema)
 
+    # ── Ejemplo JSON de salida (Heading 3)
+    if success_response and success_response.content:
+        document.add_heading(h3_ejemplo_out, level=3)
+        document.add_paragraph("Ejemplo de respuesta obtenida del endpoint:")
+        sample_output = generate_sample_json(resp_schema)
+        add_code_block(document, sample_output)
+        
     # ── Valores para el atributo de statusCode (Heading 3)
     document.add_heading(h3_status, level=3)
     add_status_code_table(document, endpoint.responses)
 
     # Salto de página para el siguiente endpoint
-    document.add_page_break()
-
-
+    #document.add_page_break()
+    
 # ============================================================
 # LIMPIEZA DE PLANTILLA
 # ============================================================
@@ -769,12 +808,17 @@ def _update_toc_with_word(docx_path: Path) -> None:
         word.DisplayAlerts = False
         abs_path = str(docx_path.resolve())
         doc = word.Documents.Open(abs_path)
-        doc.TablesOfContents(1).Update()
+
+        if doc.TablesOfContents.Count > 0:
+            doc.TablesOfContents(1).Update()
+            print("Tabla de contenido actualizada exitosamente con Microsoft Word.")
+        else:
+            print("[INFO] El documento no contiene Tabla de Contenido. Se omite la actualización.")
+
         doc.Save()
         doc.Close()
         word.Quit()
         pythoncom.CoUninitialize()
-        print("Tabla de contenido actualizada exitosamente con Microsoft Word.")
     except ImportError:
         print("[INFO] pywin32 no instalado. La TOC se actualizará al abrir el archivo en Word (Ctrl+A → F9).")
     except Exception as e:

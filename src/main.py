@@ -251,21 +251,19 @@ def print_endpoint_detail(endpoint):
 
     else:
 
-        print(
-            " - No tiene respuestas definidas"
-        )
+        print(" - No tiene respuestas definidas" )
 
 
 def main():
-    
+
     # 1. CARGAR SWAGGER / OPENAPI
     print("Cargando especificación...")
     print(f"Origen: {SWAGGER_URL}")
 
     document = load_document(SWAGGER_URL)
+    
     print("\nEspecificación OpenAPI cargada correctamente.")
 
-    
     # 2. INFORMACIÓN GENERAL
     
     info = document.get(
@@ -294,7 +292,10 @@ def main():
     
     print("\nParseando endpoints...")
     if ENDPOINTS_TO_DOCUMENT:
-        print(f"Filtro activo de endpoints: {ENDPOINTS_TO_DOCUMENT}")
+        print(
+            f"Filtro activo de endpoints: "
+            f"{ENDPOINTS_TO_DOCUMENT}"
+        )
 
     endpoints = parse_endpoints(
         document,
@@ -303,53 +304,32 @@ def main():
 
     print(
         f"\nEndpoints encontrados: "
-        f"{len(endpoints)}")
+        f"{len(endpoints)}"
+    )
 
-    for endpoint in endpoints:
-
-        print(
-            f" - "
-            f"{endpoint.method} "
-            f"{endpoint.path}")
-        
-    # 4. DETALLE DE TODOS LOS ENDPOINTS
-    
-    print( "\n" + "#" * 70)
-    print("# DETALLE DE TODOS LOS ENDPOINTS")
-    print( "#" * 70)
-
-    for endpoint in endpoints:
-
-        print_endpoint_detail(endpoint)
-        
-    # 5. EXPORTAR JSON
-    
+    # 4. EXPORTAR JSON
     output_json_path = OUTPUT_DIR / "swagger_output.json"
 
-    print("\n" + "#" * 70)
-    print( "# EXPORTANDO JSON")
-    print( "#" * 70)
+    print("# EXPORTANDO JSON")
 
     export_endpoints(
         endpoints,
         document,
-        output_file=str(output_json_path))
-    
-    # 6. GENERAR WORD
+        output_file=str(output_json_path)
+    )
+
+    # 5. GENERAR WORD
     output_docx_path = OUTPUT_DIR / "documentacion_api.docx"
 
-    print("\n" + "#" * 70)
-
-    print( "# GENERANDO DOCUMENTACIÓN WORD")
-
-    print( "#" * 70)
+    print("# GENERANDO DOCUMENTACIÓN WORD")
 
     generate_word(
         endpoints=endpoints,
         document_data=document,
-        output=str(output_docx_path))
+        output=str(output_docx_path)
+    )
 
-    print( "\nProceso terminado correctamente." )
+    print("\nProceso terminado correctamente.")
 
 if __name__ == "__main__":
-    main()
+    main()

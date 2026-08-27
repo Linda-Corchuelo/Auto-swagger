@@ -55,11 +55,19 @@ PARAMETER_CONFIG = {
         "type": "object",
         "size": "---",
      },
+    "userAttributes": {
+        "type": "object",
+        "size": "---",
+     },
     "profilePictureUrl": {
         "type": "string",
         "min": 1,
         "max": 204,
     },
+    "presignedPostProfileImage": {
+        "type": "object",
+        "size": "---",
+        },
     "password": {
         "type": "string",
         "min": 8,
@@ -109,5 +117,45 @@ PARAMETER_CONFIG = {
         "type": "string",
         "min": 1,
         "max": 100,
+    },
+    "phone_number": {
+    "type": "string",
+    "min": 1,
+    "max": 15,
+    },
+    "custom_documentNumber": {
+        "type": "string",
+        "min": 1,
+        "max": 20,
+    },
+    "custom_documentType": {
+        "type": "string",
+        "min": 1,
+        "max": 20,
+    },
+    "custom_firstName": {
+        "type": "string",
+        "min": 1,
+        "max": 100,
+    },
+    "custom_lastName": {
+        "type": "string",
+        "min": 1,
+        "max": 100,
+    },
+    "custom_nickname": {
+        "type": "string",
+        "min": 1,
+        "max": 50,
+    },
+    "custom_country": {
+        "type": "string",
+        "min": 1,
+        "max": 100,
+    },
+    "custom_documentCountry": {
+        "type": "string",
+        "min": 1,
+        "max": 20,
     },
 }
