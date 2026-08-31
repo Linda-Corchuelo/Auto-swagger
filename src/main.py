@@ -8,7 +8,7 @@ from config import (
 from swagger.reader import load_document
 from swagger.parser import parse_endpoints, print_schema_tree
 from swagger.exporter import export_endpoints
-from generator.word_generator import generate_word
+from generator.word_generator import generate_word, classify_endpoints
 
 
 def print_endpoint_detail(endpoint):
@@ -306,6 +306,12 @@ def main():
         f"\nEndpoints encontrados: "
         f"{len(endpoints)}"
     )
+
+    # 3.1 CLASIFICAR ENDPOINTS
+    groups = classify_endpoints(endpoints)
+    print(f"\nClasificación:")
+    print(f"  Cifrados: {len(groups['encrypted'])}")
+    print(f"  No cifrados: {len(groups['not_encrypted'])}")
 
     # 4. EXPORTAR JSON
     output_json_path = OUTPUT_DIR / "swagger_output.json"

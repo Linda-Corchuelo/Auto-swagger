@@ -557,6 +557,36 @@ def add_status_code_table(document, responses: List[Any]) -> None:
     set_table_col_widths(table, widths)
     document.add_paragraph()
 
+# ============================================================
+# CLASIFICACION DE ENDPOINTS
+# ============================================================
+
+def classify_endpoints(endpoints: List[Any]) -> dict:
+    """
+    Clasifica endpoints en dos grupos basándose en su descripción (objetivo).
+
+    Si la descripción contiene "no usa cifrado" (case-insensitive) → no cifrado.
+    Si NO contiene → cifrado.
+
+    Retorna dict con:
+        "encrypted": [...]
+        "not_encrypted": [...]
+    """
+    encrypted = []
+    not_encrypted = []
+
+    for endpoint in endpoints:
+        description = (endpoint.description or "").lower()
+        if "no usa cifrado" in description:
+            not_encrypted.append(endpoint)
+        else:
+            encrypted.append(endpoint)
+
+    return {
+        "encrypted": encrypted,
+        "not_encrypted": not_encrypted,
+    }
+
 
 # ============================================================
 # GENERACIÓN DE ENDPOINT SEGÚN ESTRUCTURA CORPORATIVA
@@ -676,9 +706,9 @@ def add_endpoint_section(
         sample_input = generate_sample_json(first_rb_content)
         add_code_block(document, sample_input)
         
-        # ── Estructura del Body desencriptado
+        # ── Estructura de ejemplos desencriptados (solo si hay descripción adicional)
     if remaining_description:
-        document.add_heading("Ejemplo de la estructura del Body desencriptado",level=3)
+        document.add_heading("Ejemplos desencriptados",level=3)
         document.add_paragraph(remaining_description)
 
     # ── Respuesta (Heading 3)
@@ -854,14 +884,34 @@ def generate_word(
         update_template_metadata(document, document_data)
         clean_template_dummy_elements(document)
 
-        for counter, endpoint in enumerate(endpoints, start=1):
-            add_endpoint_section(
-                document=document,
-                endpoint=endpoint,
-                index=counter,
-                base_url=base_url,
-                is_template=True,
-            )
+        groups = classify_endpoints(endpoints)
+        counter = 1
+
+        if groups["encrypted"]:
+            document.add_heading("Endpoints cifrados", level=2)
+            document.add_paragraph("A continuación mostramos los endpoints cifrados correspondientes al microservicio.")
+            for endpoint in groups["encrypted"]:
+                add_endpoint_section(
+                    document=document,
+                    endpoint=endpoint,
+                    index=counter,
+                    base_url=base_url,
+                    is_template=True,
+                )
+                counter += 1
+
+        if groups["not_encrypted"]:
+            document.add_heading("Endpoints no cifrados", level=2)
+            document.add_paragraph("A continuación mostramos los endpoints no cifrados correspondientes al microservicio.")
+            for endpoint in groups["not_encrypted"]:
+                add_endpoint_section(
+                    document=document,
+                    endpoint=endpoint,
+                    index=counter,
+                    base_url=base_url,
+                    is_template=True,
+                )
+                counter += 1
     else:
         print("Generando documento independiente desde cero...")
         document = Document()
@@ -899,14 +949,34 @@ def generate_word(
         document.add_paragraph()
 
         document.add_heading("2. Operaciones del Servicio", level=1)
-        for counter, endpoint in enumerate(endpoints, start=1):
-            add_endpoint_section(
-                document=document,
-                endpoint=endpoint,
-                index=counter,
-                base_url=base_url,
-                is_template=False,
-            )
+        groups = classify_endpoints(endpoints)
+        counter = 1
+
+        if groups["encrypted"]:
+            document.add_heading("Endpoints cifrados", level=2)
+            document.add_paragraph("A continuación mostramos los endpoints cifrados correspondientes al microservicio.")
+            for endpoint in groups["encrypted"]:
+                add_endpoint_section(
+                    document=document,
+                    endpoint=endpoint,
+                    index=counter,
+                    base_url=base_url,
+                    is_template=False,
+                )
+                counter += 1
+
+        if groups["not_encrypted"]:
+            document.add_heading("Endpoints no cifrados", level=2)
+            document.add_paragraph("A continuación mostramos los endpoints no cifrados correspondientes al microservicio.")
+            for endpoint in groups["not_encrypted"]:
+                add_endpoint_section(
+                    document=document,
+                    endpoint=endpoint,
+                    index=counter,
+                    base_url=base_url,
+                    is_template=False,
+                )
+                counter += 1
 
     # Forzar actualización de campos (TOC) al abrir el archivo en Word
     _set_update_fields_on_open(document)
