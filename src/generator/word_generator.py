@@ -558,6 +558,125 @@ def add_status_code_table(document, responses: List[Any]) -> None:
     document.add_paragraph()
 
 # ============================================================
+# PARSING DE DESCRIPCION DE ENDPOINT
+# ============================================================
+
+def parse_endpoint_description(description: str) -> dict:
+    """
+    Extrae 3 partes de la descripción de un endpoint:
+
+    1. objetivo → texto hasta el primer punto.
+    2. body_desencriptado → contenido después de
+       "Estructura del Body desencriptado".
+    3. json_salida_desencriptado → contenido después de
+       "Estructura del JSON de salida desencriptado".
+
+    Retorna dict con las 3 claves. Si una parte no existe,
+    su valor es string vacío.
+    """
+    result = {
+        "objetivo": "",
+        "body_desencriptado": "",
+        "json_salida_desencriptado": "",
+    }
+
+    if not description:
+        result["objetivo"] = (
+            "Petición encargada de realizar la operación."
+        )
+        return result
+
+    # ── 1. Objetivo: texto hasta el primer punto
+    first_period = description.find(".")
+    if first_period != -1:
+        result["objetivo"] = description[:first_period + 1].strip()
+        remaining = description[first_period + 1:].strip()
+    else:
+        result["objetivo"] = description.strip()
+        return result
+
+    if not remaining:
+        return result
+
+    # ── 2 y 3. Buscar encabezados en el texto restante
+    lower_remaining = remaining.lower()
+
+    body_marker = "estructura del body desencriptado"
+    json_marker = "estructura del json de salida desencriptado"
+
+    body_pos = lower_remaining.find(body_marker)
+    json_pos = lower_remaining.find(json_marker)
+
+    def _extract_block(text: str, marker: str) -> str:
+        """Extrae contenido después del marker, ignorando
+        '(referencia):**' u otros sufijos de la línea.
+        Busca desde el fin de la línea del marker hasta el
+        siguiente '**' o fin de texto."""
+        lower_text = text.lower()
+        start = lower_text.find(marker)
+        if start == -1:
+            return ""
+        after = text[start + len(marker):]
+        # Saltar hasta fin de línea del marker
+        newline = after.find("\n")
+        if newline == -1:
+            return after.strip()
+        content = after[newline + 1:]
+        # Buscar fin del bloque: línea que empiece con '**' o fin
+        lines = content.split("\n")
+        result_lines = []
+        for line in lines:
+            if line.strip().startswith("**") and result_lines:
+                break
+            result_lines.append(line)
+        return "\n".join(result_lines).strip()
+
+    def _strip_code_fences(text: str) -> str:
+        """Elimina fences markdown ```json ... ``` del contenido."""
+        stripped = text.strip()
+        if stripped.startswith("```"):
+            # Quitar primera línea (```json o ```)
+            first_nl = stripped.find("\n")
+            if first_nl != -1:
+                stripped = stripped[first_nl + 1:]
+            # Qutar última línea si es ```
+            if stripped.rstrip().endswith("```"):
+                stripped = stripped.rstrip()[:-3].rstrip()
+        return stripped
+
+    # ── Solo Body
+    if body_pos != -1 and json_pos == -1:
+        result["body_desencriptado"] = _strip_code_fences(
+            _extract_block(remaining, body_marker)
+        )
+
+    # ── Solo JSON
+    elif json_pos != -1 and body_pos == -1:
+        result["json_salida_desencriptado"] = _strip_code_fences(
+            _extract_block(remaining, json_marker)
+        )
+
+    # ── Ambos: Body primero, luego JSON
+    elif body_pos != -1 and json_pos != -1:
+        if body_pos < json_pos:
+            result["body_desencriptado"] = _strip_code_fences(
+                _extract_block(remaining[:json_pos], body_marker)
+            )
+            result["json_salida_desencriptado"] = _strip_code_fences(
+                _extract_block(remaining, json_marker)
+            )
+        else:
+            result["json_salida_desencriptado"] = _strip_code_fences(
+                _extract_block(remaining[:body_pos], json_marker)
+            )
+            result["body_desencriptado"] = _strip_code_fences(
+                _extract_block(remaining, body_marker)
+            )
+
+    return result
+
+
+# ============================================================
 # CLASIFICACION DE ENDPOINTS
 # ============================================================
 
@@ -641,21 +760,17 @@ def add_endpoint_section(
     r_obj_title.bold = True
 
     if endpoint.description:
-        description_parts = endpoint.description.split(".", 1)
-
-        obj_text = description_parts[0].strip() + "."
-
-        remaining_description = (
-            description_parts[1].strip()
-            if len(description_parts) > 1
-            else ""
-        )
+        parsed = parse_endpoint_description(endpoint.description)
+        obj_text = parsed["objetivo"]
+        body_desencriptado = parsed["body_desencriptado"]
+        json_salida_desencriptado = parsed["json_salida_desencriptado"]
     else:
         obj_text = (
             f"Petición encargada de realizar las acciones de "
             f"{endpoint_summary.lower()}."
         )
-        remaining_description = ""
+        body_desencriptado = ""
+        json_salida_desencriptado = ""
 
     p_obj.add_run(obj_text)
 
@@ -706,10 +821,10 @@ def add_endpoint_section(
         sample_input = generate_sample_json(first_rb_content)
         add_code_block(document, sample_input)
         
-        # ── Estructura de ejemplos desencriptados (solo si hay descripción adicional)
-    if remaining_description:
-        document.add_heading("Ejemplos desencriptados",level=3)
-        document.add_paragraph(remaining_description)
+    # ── Ejemplo Body desencriptado (solo si existe en la descripción)
+    if body_desencriptado:
+        document.add_heading("Ejemplo de Body desencriptado", level=3)
+        document.add_paragraph(body_desencriptado)
 
     # ── Respuesta (Heading 3)
     document.add_heading(h3_respuesta, level=3)
@@ -738,10 +853,14 @@ def add_endpoint_section(
         err_schema = next(iter(error_response.content.values()))
         add_schema_properties_table(document, err_schema)
 
-    # ── Ejemplo JSON de salida (Heading 3)
-    if success_response and success_response.content:
+    # ── Ejemplo JSON de salida (desencriptado desde Swagger o generado)
+    if json_salida_desencriptado:
         document.add_heading(h3_ejemplo_out, level=3)
-        document.add_paragraph("Ejemplo de respuesta obtenida del endpoint:")
+        document.add_paragraph("Ejemplo de respuesta JSON desencriptado obtenida del endpoint:")
+        add_code_block(document, json_salida_desencriptado)
+    elif success_response and success_response.content:
+        document.add_heading(h3_ejemplo_out, level=3)
+        document.add_paragraph("Ejemplo de respuesta JSON desencriptado obtenida del endpoint:")
         sample_output = generate_sample_json(resp_schema)
         add_code_block(document, sample_output)
         
