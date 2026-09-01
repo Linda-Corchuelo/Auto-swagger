@@ -10,6 +10,7 @@ from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 
 from config import WORD_TEMPLATE, PARAMETER_CONFIG
+from swagger.endpoint import SchemaInfo, SchemaProperty
 
 
 # ============================================================
@@ -322,6 +323,55 @@ def generate_sample_json(schema_or_prop: Any) -> Any:
     return "string"
 
 
+def _infer_type_from_value(value: Any) -> str:
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, float):
+        return "number"
+    if isinstance(value, list):
+        return "array"
+    if isinstance(value, dict):
+        return "object"
+    return "string"
+
+
+def generate_schema_from_json(json_data: Any, name: str = "response") -> SchemaInfo:
+    """
+    Convierte un objeto JSON en un SchemaInfo con properties,
+    para poder generar la tabla de estructura con add_schema_properties_table.
+    """
+    if isinstance(json_data, dict):
+        properties = []
+        for key, value in json_data.items():
+            properties.append(_json_value_to_schema_property(key, value))
+        return SchemaInfo(name=name, type="object", properties=properties)
+    elif isinstance(json_data, list) and json_data:
+        item_prop = _json_value_to_schema_property("items", json_data[0])
+        return SchemaInfo(name=name, type="array", items=item_prop)
+    else:
+        return SchemaInfo(name=name, type=_infer_type_from_value(json_data))
+
+
+def _json_value_to_schema_property(name: str, value: Any) -> SchemaProperty:
+    prop_type = _infer_type_from_value(value)
+
+    if prop_type == "object":
+        nested_props = []
+        for k, v in value.items():
+            nested_props.append(_json_value_to_schema_property(k, v))
+        return SchemaProperty(name=name, type="object", properties=nested_props, required=True)
+
+    if prop_type == "array":
+        if value and isinstance(value[0], (dict, list)):
+            items = _json_value_to_schema_property("items", value[0])
+        else:
+            items = SchemaProperty(name="items", type=_infer_type_from_value(value[0]) if value else "string")
+        return SchemaProperty(name=name, type="array", items=items, required=True)
+
+    return SchemaProperty(name=name, type=prop_type, required=True)
+
 
 # ============================================================
 # COMPONENTES DE DOCUMENTO WORD
@@ -456,6 +506,8 @@ def collect_schema_rows(properties: List[Any], prefix: str = "") -> List[Dict[st
                 desc = "Número de documento del usuario."
             elif "username" in p_lower:
                 desc = "Identificador único del usuario (UUID)."
+            elif "hash" in p_lower:
+                desc = "Identificador criptográfico de la transacción u operación realizada en la red blockchain."
             else:
                 desc = "Sin descripción"
 
@@ -717,6 +769,7 @@ def add_endpoint_section(
     index: int,
     base_url: str = "",
     is_template: bool = True,
+    is_encrypted: bool = True,
 ) -> None:
     """
     Agrega la documentación detallada de un endpoint siguiendo
@@ -840,19 +893,24 @@ def add_endpoint_section(
         r_bullet = p_main.add_run("· Respuesta exitosa")
         r_bullet.bold = True
         resp_schema = next(iter(success_response.content.values()))
+        # Tabla de estructura de la respuesta exitosa
         add_schema_properties_table(document, resp_schema)
 
-    error_response = next(
-        (r for r in endpoint.responses if (r.status_code.startswith("4") or r.status_code.startswith("5")) and r.content),
-        None,
-    )
-    if error_response and error_response.content:
-        p_err = document.add_paragraph()
-        r_err_bullet = p_err.add_run("· En caso de error")
-        r_err_bullet.bold = True
-        err_schema = next(iter(error_response.content.values()))
-        add_schema_properties_table(document, err_schema)
+    # ── Estructura del JSON de salida desencriptado ─────────────────────
+    if success_response and success_response.content:
+        # Título de la tabla de salida desencriptada
+        p_output = document.add_paragraph()
+        r_output = p_output.add_run(". Estructura del JSON de salida desencriptado")
+        r_output.bold = True
 
+        # Generar el schema a partir del JSON desencriptado
+        if json_salida_desencriptado:
+            output_json = json.loads(json_salida_desencriptado)
+            output_schema = generate_schema_from_json(output_json)
+        else: output_schema = resp_schema
+        # Agregar la tabla con la estructura del JSON desencriptado
+        add_schema_properties_table(document, output_schema)
+        
     # ── Ejemplo JSON de salida (desencriptado desde Swagger o generado)
     if json_salida_desencriptado:
         document.add_heading(h3_ejemplo_out, level=3)
@@ -863,7 +921,7 @@ def add_endpoint_section(
         document.add_paragraph("Ejemplo de respuesta JSON desencriptado obtenida del endpoint:")
         sample_output = generate_sample_json(resp_schema)
         add_code_block(document, sample_output)
-        
+
     # ── Valores para el atributo de statusCode (Heading 3)
     document.add_heading(h3_status, level=3)
     add_status_code_table(document, endpoint.responses)
@@ -1006,9 +1064,8 @@ def _render_service_endpoints(
 
     if groups["encrypted"]:
         h = document.add_heading("Endpoints cifrados", level=2)
-        document.add_paragraph("En esta sección se describen los endpoints del microservicio que utilizan comunicación cifrada, Todos los endpoints cifrados manejan la siguiente estructura general de entrada y salida:")
-        if is_template:
-            _set_heading_no_numbering(h)
+        document.add_paragraph("En esta sección se describen los endpoints del microservicio que utilizan comunicación cifrada, Todos los endpoints cifrados manejan la misma estructura general."
+                               " Los siguientes endpoints utilizan comunicación cifrada; sin embargo, para facilitar su comprensión, los ejemplos se muestran en formato descifrado.")
         for endpoint in groups["encrypted"]:
             add_endpoint_section(
                 document=document,
@@ -1016,14 +1073,13 @@ def _render_service_endpoints(
                 index=counter,
                 base_url=base_url,
                 is_template=is_template,
+                is_encrypted=True,
             )
             counter += 1
 
     if groups["not_encrypted"]:
         h = document.add_heading("Endpoints no cifrados", level=2)
         document.add_paragraph("En esta sección se describen los endpoints del microservicio que no utilizan comunicación cifrada, Todos los endpoints no cifrados manejan la siguiente estructura general de entrada y salida:")
-        if is_template:
-            _set_heading_no_numbering(h)
         for endpoint in groups["not_encrypted"]:
             add_endpoint_section(
                 document=document,
@@ -1031,6 +1087,7 @@ def _render_service_endpoints(
                 index=counter,
                 base_url=base_url,
                 is_template=is_template,
+                is_encrypted=False,
             )
             counter += 1
 

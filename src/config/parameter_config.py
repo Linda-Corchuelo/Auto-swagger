@@ -158,4 +158,8 @@ PARAMETER_CONFIG = {
         "min": 1,
         "max": 20,
     },
+    "hash": {
+        "type": "string",
+        "size": "Variable",
+        },
 }
