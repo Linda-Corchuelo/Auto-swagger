@@ -872,52 +872,53 @@ def add_endpoint_section(
     #document.add_page_break()
     
 # ============================================================
-# LIMPIEZA DE PLANTILLA
+# METADATOS DE PLANTILLA
 # ============================================================
 
-def clean_template_dummy_elements(document) -> None:
+def update_template_metadata(
+    document,
+    services_or_data=None,
+    document_data: Dict[str, Any] = None,
+) -> None:
     """
-    Elimina los endpoints de ejemplo preexistentes en la plantilla
-    manteniendo la portada, control de cambios, índice, definiciones
-    y el encabezado de 'Operaciones del servicio'.
+    Actualiza títulos y referencias de API en la sección de Objetivo
+    de la plantilla.
+
+    Acepta:
+        - services: lista de dicts con section_name (nuevo formato)
+        - document_data: dict del Swagger (formato anterior, un solo servicio)
     """
-    target_idx = -1
-    for i, child in enumerate(document._element.body):
-        if child.tag.endswith("p"):
-            p = document.paragraphs[0].__class__(child, document)
-            if "A continuaci" in p.text and "operaciones disponibles" in p.text:
-                target_idx = i
-                break
+    # Compatibilidad: si se pasa document_data directamente (formato anterior)
+    if document_data is not None:
+        services_list = [{"document_data": document_data}]
+    elif isinstance(services_or_data, list):
+        services_list = services_or_data
+    elif isinstance(services_or_data, dict):
+        services_list = [{"document_data": services_or_data}]
+    else:
+        services_list = []
 
-    if target_idx == -1:
-        return
+    # Construir texto con todos los nombres de API
+    api_names = []
+    for svc in services_list:
+        svc_data = svc.get("document_data", {})
+        info = svc_data.get("info", {})
+        title = info.get("title", "la API")
+        if title not in api_names:
+            api_names.append(title)
 
-    sect_pr = document._element.body.find(qn("w:sectPr"))
-    elements_to_remove = []
+    if len(api_names) == 1:
+        api_text = api_names[0]
+    elif len(api_names) == 2:
+        api_text = f"{api_names[0]} y {api_names[1]}"
+    else:
+        api_text = ", ".join(api_names[:-1]) + f" y {api_names[-1]}"
 
-    for i in range(target_idx + 1, len(document._element.body)):
-        child = document._element.body[i]
-        if child != sect_pr:
-            elements_to_remove.append(child)
-
-    for elem in elements_to_remove:
-        document._element.body.remove(elem)
-
-
-def update_template_metadata(document, document_data: Dict[str, Any]) -> None:
-    """Actualiza títulos y referencias de API en la sección de Objetivo de la plantilla."""
-    info = document_data.get("info", {})
-    title = info.get("title", "la API")
-
-    for p in document.paragraphs[:40]:
+    for p in document.paragraphs[:50]:
         if "Este documento pretende describir de manera" in p.text:
             p.text = (
                 f"Este documento pretende describir de manera técnica y detallada "
-                f"el consumo del servicio web de {title}."
-            )
-            break
-
-
+                f"el consumo del servicio web de Rummi.")
 # ============================================================
 # FUNCIÓN PRINCIPAL DE GENERACIÓN
 # ============================================================
@@ -974,18 +975,100 @@ def _update_toc_with_word(docx_path: Path) -> None:
         print(f"[INFO] No se pudo actualizar la TOC automáticamente ({e}). Ábrela en Word y presiona Ctrl+A → F9.")
 
 
+def _add_service_info_block(document, doc_data: Dict[str, Any]) -> None:
+    """
+    Agrega un bloque de información general del microservicio
+    debajo del Heading 1, extrayendo la description
+    directamente del Swagger/OpenAPI.
+    """
+    info = doc_data.get("info", {})
+    description = info.get("description", "")
+
+    if description:
+        p_desc = document.add_paragraph()
+        p_desc.add_run(description)
+
+def _render_service_endpoints(
+    document,
+    endpoints,
+    base_url,
+    is_template,
+):
+    """
+    Agrega los endpoints de un servicio al documento, agrupados
+    por clasificación (cifrados / no cifrados).
+
+    Los grupos usan Heading 2 con numId=0 para no consumir
+    numeración de la secuencia de endpoints.
+    """
+    groups = classify_endpoints(endpoints)
+    counter = 1
+
+    if groups["encrypted"]:
+        h = document.add_heading("Endpoints cifrados", level=2)
+        document.add_paragraph("En esta sección se describen los endpoints del microservicio que utilizan comunicación cifrada, Todos los endpoints cifrados manejan la siguiente estructura general de entrada y salida:")
+        if is_template:
+            _set_heading_no_numbering(h)
+        for endpoint in groups["encrypted"]:
+            add_endpoint_section(
+                document=document,
+                endpoint=endpoint,
+                index=counter,
+                base_url=base_url,
+                is_template=is_template,
+            )
+            counter += 1
+
+    if groups["not_encrypted"]:
+        h = document.add_heading("Endpoints no cifrados", level=2)
+        document.add_paragraph("En esta sección se describen los endpoints del microservicio que no utilizan comunicación cifrada, Todos los endpoints no cifrados manejan la siguiente estructura general de entrada y salida:")
+        if is_template:
+            _set_heading_no_numbering(h)
+        for endpoint in groups["not_encrypted"]:
+            add_endpoint_section(
+                document=document,
+                endpoint=endpoint,
+                index=counter,
+                base_url=base_url,
+                is_template=is_template,
+            )
+            counter += 1
+
+
+def _set_heading_no_numbering(heading) -> None:
+    """
+    Configura un heading para que no consuma numeración
+    automática (numId=0). Esto permite que los endpoints
+    mantengan numeración continua sin saltos.
+    """
+    pPr = heading._element.get_or_add_pPr()
+    # Remover numPr existente del estilo
+    for old in pPr.findall(qn("w:numPr")):
+        pPr.remove(old)
+    # Agregar numPr con numId=0 (sin numeración)
+    numPr = OxmlElement("w:numPr")
+    ilvl = OxmlElement("w:ilvl")
+    ilvl.set(qn("w:val"), "1")
+    numId = OxmlElement("w:numId")
+    numId.set(qn("w:val"), "0")
+    numPr.append(ilvl)
+    numPr.append(numId)
+    pPr.append(numPr)
+
+
 def generate_word(
-    endpoints: List[Any],
-    document_data: Dict[str, Any],
+    services: List[Dict[str, Any]],
     output: Union[str, Path] = "output/documentacion_api.docx",
     template_path: Optional[Union[str, Path]] = None,
 ) -> None:
     """
     Genera la documentación Word (.docx).
 
-    Si se proporciona una plantilla (o existe WORD_TEMPLATE), se basa
-    en ella respetando los estándares institucionales de la empresa.
-    En caso contrario, genera un documento independiente bien estructurado.
+    Parámetros:
+        services: Lista de dicts con keys:
+            - section_name: nombre de la sección (e.g. "Rummi User Administration API")
+            - endpoints: lista de objetos Endpoint
+            - document_data: dict del Swagger/OpenAPI
     """
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -993,44 +1076,40 @@ def generate_word(
     template_file = Path(template_path) if template_path else Path(WORD_TEMPLATE)
     use_template = template_file.exists()
 
-    servers = document_data.get("servers", [])
-    base_url = servers[0].get("url", "") if servers else ""
-
     if use_template:
         print(f"Usando plantilla corporativa: {template_file}")
+
+        # Usar el document_data del primer servicio para el template
+        first_doc_data = services[0]["document_data"]
+        servers = first_doc_data.get("servers", [])
+        base_url = servers[0].get("url", "") if servers else ""
+
         document = Document(str(template_file))
         _configure_document_styles(document)
-        update_template_metadata(document, document_data)
-        clean_template_dummy_elements(document)
+        update_template_metadata(document, services)
 
-        groups = classify_endpoints(endpoints)
-        counter = 1
+        for service_idx, service in enumerate(services):
+            section_name = service["section_name"]
+            svc_endpoints = service["endpoints"]
+            svc_doc_data = service["document_data"]
 
-        if groups["encrypted"]:
-            document.add_heading("Endpoints cifrados", level=2)
-            document.add_paragraph("A continuación mostramos los endpoints cifrados correspondientes al microservicio.")
-            for endpoint in groups["encrypted"]:
-                add_endpoint_section(
-                    document=document,
-                    endpoint=endpoint,
-                    index=counter,
-                    base_url=base_url,
-                    is_template=True,
-                )
-                counter += 1
+            svc_servers = svc_doc_data.get("servers", [])
+            svc_base_url = svc_servers[0].get("url", "") if svc_servers else base_url
 
-        if groups["not_encrypted"]:
-            document.add_heading("Endpoints no cifrados", level=2)
-            document.add_paragraph("A continuación mostramos los endpoints no cifrados correspondientes al microservicio.")
-            for endpoint in groups["not_encrypted"]:
-                add_endpoint_section(
-                    document=document,
-                    endpoint=endpoint,
-                    index=counter,
-                    base_url=base_url,
-                    is_template=True,
-                )
-                counter += 1
+            print(f"\nGenerando sección: {section_name} ({len(svc_endpoints)} endpoints)")
+
+            # Agregar Heading 1 con nombre del microservicio
+            document.add_heading(section_name, level=1)
+
+            # Agregar información general del microservicio desde el Swagger
+            _add_service_info_block(document, svc_doc_data)
+
+            _render_service_endpoints(
+                document=document,
+                endpoints=svc_endpoints,
+                base_url=svc_base_url,
+                is_template=True,
+            )
     else:
         print("Generando documento independiente desde cero...")
         document = Document()
@@ -1042,7 +1121,8 @@ def generate_word(
         section.left_margin = Inches(0.7)
         section.right_margin = Inches(0.7)
 
-        info = document_data.get("info", {})
+        first_doc_data = services[0]["document_data"]
+        info = first_doc_data.get("info", {})
         title_p = document.add_paragraph()
         title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         run = title_p.add_run(info.get("title", "Documentación de API"))
@@ -1055,7 +1135,7 @@ def generate_word(
         info_data = [
             ("Título", info.get("title", "Sin información")),
             ("Versión", info.get("version", "1.0.0")),
-            ("OpenAPI", document_data.get("openapi", "3.0.0")),
+            ("OpenAPI", first_doc_data.get("openapi", "3.0.0")),
         ]
         for row, (k, v) in zip(info_table.rows, info_data):
             row.cells[0].text = k
@@ -1067,35 +1147,25 @@ def generate_word(
                     run.font.color.rgb = RGBColor(255, 255, 255)
         document.add_paragraph()
 
-        document.add_heading("2. Operaciones del Servicio", level=1)
-        groups = classify_endpoints(endpoints)
-        counter = 1
+        doc_counter = 2
+        for service in services:
+            section_name = service["section_name"]
+            svc_endpoints = service["endpoints"]
+            svc_doc_data = service["document_data"]
 
-        if groups["encrypted"]:
-            document.add_heading("Endpoints cifrados", level=2)
-            document.add_paragraph("A continuación mostramos los endpoints cifrados correspondientes al microservicio.")
-            for endpoint in groups["encrypted"]:
-                add_endpoint_section(
-                    document=document,
-                    endpoint=endpoint,
-                    index=counter,
-                    base_url=base_url,
-                    is_template=False,
-                )
-                counter += 1
+            svc_servers = svc_doc_data.get("servers", [])
+            svc_base_url = svc_servers[0].get("url", "") if svc_servers else ""
 
-        if groups["not_encrypted"]:
-            document.add_heading("Endpoints no cifrados", level=2)
-            document.add_paragraph("A continuación mostramos los endpoints no cifrados correspondientes al microservicio.")
-            for endpoint in groups["not_encrypted"]:
-                add_endpoint_section(
-                    document=document,
-                    endpoint=endpoint,
-                    index=counter,
-                    base_url=base_url,
-                    is_template=False,
-                )
-                counter += 1
+            document.add_heading(
+                f"{doc_counter}. {section_name}", level=1
+            )
+            _render_service_endpoints(
+                document=document,
+                endpoints=svc_endpoints,
+                base_url=svc_base_url,
+                is_template=False,
+            )
+            doc_counter += 1
 
     # Forzar actualización de campos (TOC) al abrir el archivo en Word
     _set_update_fields_on_open(document)
@@ -1103,14 +1173,14 @@ def generate_word(
     try:
         document.save(str(output_path))
         print(f"\nDocumento Word generado exitosamente en: {output_path}")
-        # Intentar actualizar la TOC automáticamente vía COM (solo Windows + Word)
+        
         _update_toc_with_word(output_path)
     except PermissionError:
-        fallback_path = output_path.with_name(f"{output_path.stem}_nuevo{output_path.suffix}")
+        fallback_path = output_path.with_name(
+            f"{output_path.stem}_nuevo{output_path.suffix}"
+        )
         _set_update_fields_on_open(document)
         document.save(str(fallback_path))
-        print(f"\n[AVISO] El archivo original estaba abierto en Word. Se guardó exitosamente en: {fallback_path}")
+        print(f"\n[AVISO] El archivo original estaba abierto en Word. Se guardó en: {fallback_path}")
         _update_toc_with_word(fallback_path)
-
-
-
+        

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from config.parameter_config import PARAMETER_CONFIG
 
@@ -27,16 +27,32 @@ ensure_directories()
 WORD_TEMPLATE: Path = TEMPLATE_DIR / "IXV10 - acuerdo de interfaz.docx"
 
 # ============================================================
-# FUENTE SWAGGER / OPENAPI
+# SERVICIOS SWAGGER / OPENAPI
+# ============================================================
+# Cada servicio define: url, section_name (nombre de la sección
+# en el Word), y filter_paths (prefijos de paths a incluir).
+
+SWAGGER_SERVICES: List[Dict] = [
+    {
+        "url": "https://qacore-rummi.gse.com.co/users/api-docs/",
+        "section_name": "Rummi User Administration API",
+        "filter_paths": ["/users"],
+    },
+    {
+        "url": "https://qacore-rummi.gse.com.co/trading/api-docs/",
+        "section_name": "Rummi Blockchain Trading API",
+        "filter_paths": ["/trading"],
+    },
+]
+
+# ============================================================
+# FUENTE SWAGGER / OPENAPI (compatibilidad hacia atrás)
 # ============================================================
 
-SWAGGER_URL: str = "https://qacore-rummi.gse.com.co/users/api-docs/"
+SWAGGER_URL: str = SWAGGER_SERVICES[0]["url"]
 
 # ============================================================
-# FILTROS DE ENDPOINTS
+# FILTROS DE ENDPOINTS (compatibilidad hacia atrás)
 # ============================================================
-# Si la lista contiene elementos (e.g. ["/users"]), solo se documentarán
-# los endpoints que comiencen o coincidan con dichas rutas.
-# Si se deja vacía ([]), se documentarán todos los endpoints encontrados.
 
-ENDPOINTS_TO_DOCUMENT: Optional[List[str]] = ["/users"]
+ENDPOINTS_TO_DOCUMENT: Optional[List[str]] = SWAGGER_SERVICES[0]["filter_paths"]

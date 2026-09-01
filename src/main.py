@@ -1,7 +1,6 @@
 from config import (
-    SWAGGER_URL,
+    SWAGGER_SERVICES,
     OUTPUT_DIR,
-    ENDPOINTS_TO_DOCUMENT,
     WORD_TEMPLATE,
 )
 
@@ -256,83 +255,73 @@ def print_endpoint_detail(endpoint):
 
 def main():
 
-    # 1. CARGAR SWAGGER / OPENAPI
-    print("Cargando especificación...")
-    print(f"Origen: {SWAGGER_URL}")
+    services = []
 
-    document = load_document(SWAGGER_URL)
-    
-    print("\nEspecificación OpenAPI cargada correctamente.")
+    for service_config in SWAGGER_SERVICES:
+        swagger_url = service_config["url"]
+        section_name = service_config["section_name"]
+        filter_paths = service_config["filter_paths"]
 
-    # 2. INFORMACIÓN GENERAL
-    
-    info = document.get(
-        "info",
-        {}
-    )
+        print("=" * 70)
+        print(f"SERVICIO: {section_name}")
+        print("=" * 70)
+        print(f"Origen: {swagger_url}")
 
-    print("\nInformación general:")
+        # 1. CARGAR SWAGGER / OPENAPI
+        document = load_document(swagger_url)
 
-    print(
-        f"Título: "
-        f"{info.get('title')}"
-    )
+        print("\nEspecificación OpenAPI cargada correctamente.")
 
-    print(
-        f"Versión: "
-        f"{info.get('version')}"
-    )
+        # 2. INFORMACIÓN GENERAL
+        info = document.get("info", {})
+        print(f"\nTítulo: {info.get('title')}")
+        print(f"Versión: {info.get('version')}")
+        print(f"OpenAPI: {document.get('openapi')}")
 
-    print(
-        f"OpenAPI: "
-        f"{document.get('openapi')}"
-    )
-    
-    # 3. PARSEAR ENDPOINTS
-    
-    print("\nParseando endpoints...")
-    if ENDPOINTS_TO_DOCUMENT:
-        print(
-            f"Filtro activo de endpoints: "
-            f"{ENDPOINTS_TO_DOCUMENT}"
+        # 3. PARSEAR ENDPOINTS
+        print("\nParseando endpoints...")
+        if filter_paths:
+            print(f"Filtro activo de endpoints: {filter_paths}")
+
+        endpoints = parse_endpoints(
+            document,
+            filter_paths=filter_paths,
         )
 
-    endpoints = parse_endpoints(
-        document,
-        filter_paths=ENDPOINTS_TO_DOCUMENT
-    )
+        print(f"\nEndpoints encontrados: {len(endpoints)}")
 
-    print(
-        f"\nEndpoints encontrados: "
-        f"{len(endpoints)}"
-    )
+        # 3.1 CLASIFICAR ENDPOINTS
+        groups = classify_endpoints(endpoints)
+        print(f"\nClasificación:")
+        print(f"  Cifrados: {len(groups['encrypted'])}")
+        print(f"  No cifrados: {len(groups['not_encrypted'])}")
 
-    # 3.1 CLASIFICAR ENDPOINTS
-    groups = classify_endpoints(endpoints)
-    print(f"\nClasificación:")
-    print(f"  Cifrados: {len(groups['encrypted'])}")
-    print(f"  No cifrados: {len(groups['not_encrypted'])}")
+        # 4. EXPORTAR JSON
+        output_json_path = OUTPUT_DIR / f"swagger_output_{section_name.replace(' ', '_').lower()}.json"
+        print(f"\nExportando JSON a: {output_json_path}")
 
-    # 4. EXPORTAR JSON
-    output_json_path = OUTPUT_DIR / "swagger_output.json"
+        export_endpoints(
+            endpoints,
+            document,
+            output_file=str(output_json_path),
+        )
 
-    print("# EXPORTANDO JSON")
-
-    export_endpoints(
-        endpoints,
-        document,
-        output_file=str(output_json_path)
-    )
+        services.append({
+            "section_name": section_name,
+            "endpoints": endpoints,
+            "document_data": document,
+        })
 
     # 5. GENERAR WORD
     output_docx_path = OUTPUT_DIR / "documentacion_api.docx"
 
-    print("# GENERANDO DOCUMENTACIÓN WORD")
+    print("\n" + "=" * 70)
+    print("GENERANDO DOCUMENTACIÓN WORD")
+    print("=" * 70)
 
     generate_word(
-        endpoints=endpoints,
-        document_data=document,
-        output=str(output_docx_path)
+        services=services,
+        output=str(output_docx_path),
     )
 
     print("\nProceso terminado correctamente.")
