@@ -425,10 +425,13 @@ def add_code_block(document, code_data: Any) -> None:
     document.add_paragraph()
 
 
-def add_parameters_table(document, parameters: List[Any]) -> None:
+def add_parameters_table(document, parameters: List[Any], required_only: bool = False) -> None:
     """Genera la tabla de 5 columnas para parámetros de consulta, ruta o cabecera."""
     if not parameters:
         return
+
+    if required_only:
+        parameters = [p for p in parameters if p.required]
 
     table = document.add_table(rows=1, cols=5)
     table.style = "Table Grid"
@@ -494,8 +497,22 @@ def collect_schema_rows(properties: List[Any], prefix: str = "") -> List[Dict[st
                 desc = "Código interno de respuesta del servicio."
             elif "users" in p_lower:
                 desc = "Lista de usuarios."
+            elif "userrole" in p_lower:
+                desc = "Objeto con los datos del usuario."
+            elif "userid" in p_lower:
+                desc = "Identificador único del usuario."
+            elif "username" in p_lower:
+                desc = "Identificador único del usuario."
             elif "user" in p_lower:
                 desc = "Objeto con los datos del usuario."
+            elif "amount" in p_lower:
+                desc = "Valor o monto de la transacción."
+            elif "buyer" in p_lower:
+                desc = "Identificador o información del comprador asociado a la transacción."
+            elif "seller" in p_lower:
+                desc = "Identificador o información del vendedor asociado a la transacción."
+            elif "pin" in p_lower:
+                desc = "Código PIN utilizado para la validación o autenticación de la operación."
             elif "data" in p_lower:
                 desc = "Objeto con la información registrada o actualizada."
             elif "email" in p_lower:
@@ -504,10 +521,84 @@ def collect_schema_rows(properties: List[Any], prefix: str = "") -> List[Dict[st
                 desc = "Número de teléfono en formato internacional (E.164)."
             elif "document" in p_lower:
                 desc = "Número de documento del usuario."
-            elif "username" in p_lower:
-                desc = "Identificador único del usuario (UUID)."
+            elif "role" in p_lower:
+                desc = "Rol del usuario."
+            elif "name" in p_lower:
+                desc = "Nombre del usuario."
+            elif "lastkey" in p_lower:
+                desc = "Clave para paginación o siguiente bloque de resultados."
+            elif "enabled" in p_lower:
+                desc = "Indicador de estado del usuario."
+            elif "newpassword" in p_lower:
+                desc = "Nueva contraseña del usuario."
+            elif "password" in p_lower:
+                desc = "Contraseña de acceso del usuario."
+            elif "url" in p_lower:
+                desc = "URL del presigned post para la imagen de perfil."
             elif "hash" in p_lower:
                 desc = "Identificador criptográfico de la transacción u operación realizada en la red blockchain."
+            elif "kyc_level" in p_lower:
+                desc = "Nivel de verificación de identidad (KYC)."
+            elif "isacceptatdp" in p_lower:
+                desc = "Indicador de aceptación de los términos y condiciones."
+            elif "bio_status" in p_lower:
+                desc = "Estado del perfil biométrico del usuario."
+            elif "atdptype" in p_lower:
+                desc = "Tipo de plantilla de verificación de identidad (ATDP)."
+            elif "idtemplate" in p_lower:
+                desc = "Identificador del usuario firmante de la plantilla (ATDP)."
+            elif "notificationid" in p_lower:
+                desc = "Identificador de la notificación."
+            elif "notification" in p_lower:
+                desc = "Objeto con la notificación registrada."
+            elif "payload" in p_lower:
+                desc = "Objeto con el contenido de la notificación."
+            elif "title" in p_lower:
+                desc = "Título de la notificación."
+            elif "link" in p_lower:
+                desc = "Enlace o URL incluido en la notificación."
+            elif "read" in p_lower:
+                desc = "Indicador de si la notificación fue leída."
+            elif "timestamp" in p_lower:
+                desc = "Fecha y hora del evento en formato ISO 8601."
+            elif "success" in p_lower:
+                desc = "Indicador de si la operación fue exitosa."
+            elif "redirectto" in p_lower:
+                desc = "Ruta de redirección después de la autenticación."
+            elif "otp" in p_lower:
+                desc = "Código de verificación de un solo uso (OTP)."
+            elif "walletaddress" in p_lower:
+                desc = "Dirección pública de la wallet en la red blockchain."
+            elif "balancepol" in p_lower:
+                desc = "Balance de la criptomoneda nativa POL."
+            elif "balances" in p_lower:
+                desc = "Lista de balances por símbolo."
+            elif "tokensbalance" in p_lower:
+                desc = "Cantidad total de tokens poseídos."
+            elif "balance" in p_lower:
+                desc = "Monto disponible del activo."
+            elif "symbol" in p_lower:
+                desc = "Símbolo o ticker del activo."
+            elif "stablecoin" in p_lower:
+                desc = "Stablecoin asociada al token."
+            elif "tokenpriceinusd" in p_lower:
+                desc = "Precio del token en dólares (USD)."
+            elif "totaltokens" in p_lower:
+                desc = "Total de tokens disponibles."
+            elif "detailtokens" in p_lower:
+                desc = "Detalle de los tokens (vaults) del usuario."
+            elif "features" in p_lower:
+                desc = "Características adicionales del token."
+            elif "address" in p_lower:
+                desc = "Dirección del contrato del token o vault."
+            elif "country" in p_lower:
+                desc = "Código de país (ISO 3166-1 alfa-2)."
+            elif "status" in p_lower:
+                desc = "Estado actual del recurso."
+            elif "type" in p_lower:
+                desc = "Tipo de wallet o clasificación del recurso."
+            elif "id" in p_lower:
+                desc = "Identificador único del registro."
             else:
                 desc = "Sin descripción"
 
@@ -615,20 +706,23 @@ def add_status_code_table(document, responses: List[Any]) -> None:
 
 def parse_endpoint_description(description: str) -> dict:
     """
-    Extrae 3 partes de la descripción de un endpoint:
+    Extrae 4 partes de la descripción de un endpoint:
 
     1. objetivo → texto hasta el primer punto.
     2. body_desencriptado → contenido después de
        "Estructura del Body desencriptado".
-    3. json_salida_desencriptado → contenido después de
+    3. json_entrada_desencriptado → contenido después de
+       "Ejemplo de entrada desencriptado".
+    4. json_salida_desencriptado → contenido después de
        "Estructura del JSON de salida desencriptado".
 
-    Retorna dict con las 3 claves. Si una parte no existe,
+    Retorna dict con las 4 claves. Si una parte no existe,
     su valor es string vacío.
     """
     result = {
         "objetivo": "",
         "body_desencriptado": "",
+        "json_entrada_desencriptado": "",
         "json_salida_desencriptado": "",
     }
 
@@ -650,13 +744,15 @@ def parse_endpoint_description(description: str) -> dict:
     if not remaining:
         return result
 
-    # ── 2 y 3. Buscar encabezados en el texto restante
+    # ── 2, 3 y 4. Buscar encabezados en el texto restante
     lower_remaining = remaining.lower()
 
     body_marker = "estructura del body desencriptado"
+    entrada_marker = "estructura del json de entrada desencriptado"
     json_marker = "estructura del json de salida desencriptado"
 
     body_pos = lower_remaining.find(body_marker)
+    entrada_pos = lower_remaining.find(entrada_marker)
     json_pos = lower_remaining.find(json_marker)
 
     def _extract_block(text: str, marker: str) -> str:
@@ -696,34 +792,41 @@ def parse_endpoint_description(description: str) -> dict:
                 stripped = stripped.rstrip()[:-3].rstrip()
         return stripped
 
-    # ── Solo Body
-    if body_pos != -1 and json_pos == -1:
-        result["body_desencriptado"] = _strip_code_fences(
-            _extract_block(remaining, body_marker)
-        )
+    def _clean_json_trailing_commas(text: str) -> str:
+        """Elimina comas trailing de JSON (válido en JSON5 pero no en JSON estándar)."""
+        import re
+        # Eliminar coma antes de } o ]
+        cleaned = re.sub(r',\s*([}\]])', r'\1', text)
+        return cleaned
 
-    # ── Solo JSON
-    elif json_pos != -1 and body_pos == -1:
-        result["json_salida_desencriptado"] = _strip_code_fences(
-            _extract_block(remaining, json_marker)
-        )
+    def _fix_json_missing_braces(text: str) -> str:
+        """Agrega llaves de cierre faltantes para JSONs incompletos."""
+        text = text.strip()
+        opens = text.count('{') - text.count('}')
+        if opens > 0:
+            text += '\n' + '}' * opens
+        return text
 
-    # ── Ambos: Body primero, luego JSON
-    elif body_pos != -1 and json_pos != -1:
-        if body_pos < json_pos:
-            result["body_desencriptado"] = _strip_code_fences(
-                _extract_block(remaining[:json_pos], body_marker)
+    # ── Extraer bloques ordenados por posición
+    markers = [
+        (body_pos, body_marker, "body_desencriptado"),
+        (entrada_pos, entrada_marker, "json_entrada_desencriptado"),
+        (json_pos, json_marker, "json_salida_desencriptado"),
+    ]
+    # Filtrar solo los que existen y ordenar por posición
+    found = [(pos, marker, key) for pos, marker, key in markers if pos != -1]
+    found.sort(key=lambda x: x[0])
+
+    for i, (pos, marker, key) in enumerate(found):
+        # El límite superior es el inicio del siguiente marker, o fin de texto
+        end = found[i + 1][0] if i + 1 < len(found) else len(remaining)
+        result[key] = _fix_json_missing_braces(
+            _clean_json_trailing_commas(
+                _strip_code_fences(
+                    _extract_block(remaining[pos:end], marker)
+                )
             )
-            result["json_salida_desencriptado"] = _strip_code_fences(
-                _extract_block(remaining, json_marker)
-            )
-        else:
-            result["json_salida_desencriptado"] = _strip_code_fences(
-                _extract_block(remaining[:body_pos], json_marker)
-            )
-            result["body_desencriptado"] = _strip_code_fences(
-                _extract_block(remaining, body_marker)
-            )
+        )
 
     return result
 
@@ -816,6 +919,7 @@ def add_endpoint_section(
         parsed = parse_endpoint_description(endpoint.description)
         obj_text = parsed["objetivo"]
         body_desencriptado = parsed["body_desencriptado"]
+        json_entrada_desencriptado = parsed["json_entrada_desencriptado"]
         json_salida_desencriptado = parsed["json_salida_desencriptado"]
     else:
         obj_text = (
@@ -823,6 +927,7 @@ def add_endpoint_section(
             f"{endpoint_summary.lower()}."
         )
         body_desencriptado = ""
+        json_entrada_desencriptado = ""
         json_salida_desencriptado = ""
 
     p_obj.add_run(obj_text)
@@ -845,6 +950,7 @@ def add_endpoint_section(
     # ── Parámetros de Entrada (Heading 3)
     has_rb = bool(endpoint.request_body and endpoint.request_body.content)
     has_params = bool(endpoint.parameters)
+    is_get_users = endpoint.method.lower() == "get" and endpoint.path == "/users"
 
     document.add_heading(h3_params, level=3)
 
@@ -857,27 +963,47 @@ def add_endpoint_section(
         if has_params:
             p_extra = document.add_paragraph()
             p_extra.add_run("Parámetros de cabecera / consulta requeridos:")
-            add_parameters_table(document, endpoint.parameters)
+            add_parameters_table(document, endpoint.parameters, required_only=is_get_users)
 
     elif has_params:
         p_intro = document.add_paragraph()
         p_intro.add_run("Los parámetros de la petición deben cumplir con los siguientes atributos:")
-        add_parameters_table(document, endpoint.parameters)
+        add_parameters_table(document, endpoint.parameters, required_only=is_get_users)
     else:
         p_intro = document.add_paragraph()
         p_intro.add_run("Este endpoint no requiere parámetros de entrada adicionales.")
 
-    # ── Ejemplo JSON de entrada (Heading 3, solo si hay request body)
+    # ── Estructura de JSON de entrada desencriptado (ANTES del heading de ejemplo)
+    if is_encrypted:
+        p_entrada_struct = document.add_paragraph()
+        r_entrada_struct = p_entrada_struct.add_run("Estructura de JSON de entrada desencriptado")
+        r_entrada_struct.bold = True
+        if json_entrada_desencriptado:
+            try:
+                entrada_json = json.loads(json_entrada_desencriptado)
+                entrada_schema = generate_schema_from_json(entrada_json)
+                add_schema_properties_table(document, entrada_schema)
+            except json.JSONDecodeError:
+                pass
+        elif has_rb:
+            add_schema_properties_table(document, first_rb_content)
+
+    # ── Ejemplo JSON de entrada (Heading 3, siempre se muestra)
+    document.add_heading(h3_ejemplo_in, level=3)
     if has_rb:
-        document.add_heading(h3_ejemplo_in, level=3)
         document.add_paragraph("Ejemplo correspondiente al consumo del endpoint:")
         sample_input = generate_sample_json(first_rb_content)
         add_code_block(document, sample_input)
-        
+
+    # ── Ejemplo de entrada desencriptado (solo si existe en la descripción)
+    if json_entrada_desencriptado:
+        document.add_paragraph("Ejemplo de JSON de entrada desencriptado:")
+        add_code_block(document, json_entrada_desencriptado)
+
     # ── Ejemplo Body desencriptado (solo si existe en la descripción)
-    if body_desencriptado:
-        document.add_heading("Ejemplo de Body desencriptado", level=3)
-        document.add_paragraph(body_desencriptado)
+    #if body_desencriptado:
+     #   document.add_heading("Ejemplo de Body desencriptado", level=3)
+      #  document.add_paragraph(body_desencriptado)
 
     # ── Respuesta (Heading 3)
     document.add_heading(h3_respuesta, level=3)
@@ -890,7 +1016,7 @@ def add_endpoint_section(
     
     if success_response and success_response.content:
         p_main = document.add_paragraph()
-        r_bullet = p_main.add_run("· Respuesta exitosa")
+        r_bullet = p_main.add_run("Respuesta exitosa")
         r_bullet.bold = True
         resp_schema = next(iter(success_response.content.values()))
         # Tabla de estructura de la respuesta exitosa
@@ -900,7 +1026,7 @@ def add_endpoint_section(
     if success_response and success_response.content:
         # Título de la tabla de salida desencriptada
         p_output = document.add_paragraph()
-        r_output = p_output.add_run(". Estructura del JSON de salida desencriptado")
+        r_output = p_output.add_run("Estructura del JSON de salida desencriptado")
         r_output.bold = True
 
         # Generar el schema a partir del JSON desencriptado
@@ -1065,7 +1191,7 @@ def _render_service_endpoints(
     if groups["encrypted"]:
         h = document.add_heading("Endpoints cifrados", level=2)
         document.add_paragraph("En esta sección se describen los endpoints del microservicio que utilizan comunicación cifrada, Todos los endpoints cifrados manejan la misma estructura general."
-                               " Los siguientes endpoints utilizan comunicación cifrada; sin embargo, para facilitar su comprensión, los ejemplos se muestran en formato descifrado.")
+                               " Los siguientes endpoints utilizan comunicación cifrada; sin embargo, para facilitar su comprensión, los ejemplos de entrada y salida se muestran en formato descifrado.")
         for endpoint in groups["encrypted"]:
             add_endpoint_section(
                 document=document,
