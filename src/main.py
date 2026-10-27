@@ -261,6 +261,7 @@ def main():
         swagger_url = service_config["url"]
         section_name = service_config["section_name"]
         filter_paths = service_config["filter_paths"]
+        auth = service_config.get("auth")
 
         print("=" * 70)
         print(f"SERVICIO: {section_name}")
@@ -268,7 +269,7 @@ def main():
         print(f"Origen: {swagger_url}")
 
         # 1. CARGAR SWAGGER / OPENAPI
-        document = load_document(swagger_url)
+        document = load_document(swagger_url, auth=auth)
 
         print("\nEspecificación OpenAPI cargada correctamente.")
 

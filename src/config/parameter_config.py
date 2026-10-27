@@ -21,7 +21,7 @@ PARAMETER_CONFIG = {
     "email": {
         "type": "string",
         "min": 1,
-        "max": 100,
+        "max": 35,
     },
     "userName": {
         "type": "string",
@@ -35,7 +35,7 @@ PARAMETER_CONFIG = {
     "code": {
         "type": "string",
         "min": 1,
-        "max": 50,
+        "max": 5,
     },
     "data": {
         "type": "object",
@@ -44,7 +44,7 @@ PARAMETER_CONFIG = {
     "message": {
         "type": "string",
         "min": 1,
-        "max": 200,
+        "max": 50,
     },
     "users": {
         "type": "array",
@@ -62,7 +62,7 @@ PARAMETER_CONFIG = {
     "profilePictureUrl": {
         "type": "string",
         "min": 1,
-        "max": 204,
+        "max": 100,
     },
     "presignedPostProfileImage": {
         "type": "object",
@@ -71,12 +71,12 @@ PARAMETER_CONFIG = {
     "password": {
         "type": "string",
         "min": 8,
-        "max": 100,
+        "max": 20,
     },
     "newPassword": {
         "type": "string",
         "min": 8,
-        "max": 100,
+        "max": 20,
     },
     "confirmationCode": {
         "type": "string",
@@ -96,7 +96,7 @@ PARAMETER_CONFIG = {
     "name": {
         "type": "string",
         "min": 1,
-        "max": 100,
+        "max": 25,
     },
     "documentNumber": {
         "type": "string",
@@ -106,17 +106,36 @@ PARAMETER_CONFIG = {
     "role": {
         "type": "string",
         "min": 1,
+        "max": 25,
+    },
+    "userRole": {
+        "type": "string",
+        "min": 1,
         "max": 50,
     },
     "bio_code": {
         "type": "string",
         "min": 1,
-        "max": 100,
+        "max": 20,
+    },
+    "bio_status": {
+        "type": "string",
+        "min": 1,
+        "max": 15,
+    },
+    "kyc_level": {
+        "type": "string",
+        "min": 1,
+        "max": 25,
+    },
+    "isAcceptATDP": {
+        "type": "boolean",
+        "size": "----",
     },
     "lastKey": {
         "type": "string",
         "min": 1,
-        "max": 100,
+        "max": 25,
     },
     "phone_number": {
     "type": "string",
@@ -136,30 +155,192 @@ PARAMETER_CONFIG = {
     "custom_firstName": {
         "type": "string",
         "min": 1,
-        "max": 100,
+        "max": 25,
     },
     "custom_lastName": {
         "type": "string",
         "min": 1,
-        "max": 100,
+        "max": 25,
     },
     "custom_nickname": {
         "type": "string",
         "min": 1,
-        "max": 50,
+        "max": 25,
     },
     "custom_country": {
         "type": "string",
         "min": 1,
-        "max": 100,
+        "max": 25,
     },
     "custom_documentCountry": {
         "type": "string",
         "min": 1,
         "max": 20,
     },
+    "amount": {
+        "type": "number",
+        "size": "Variable"
+    },
+    "buyer": {
+        "type": "string",
+        "min": 1,
+        "max": 25
+    },
+    "seller": {
+        "type": "string",
+        "min": 1,
+        "max": 25
+    },
+    "atdpType": {
+        "type": "string",
+        "min": 1,
+        "max": 10
+    },
+    "idTemplate": {
+        "type": "string",
+        "size": "Variable"
+    },
+    "pin": {
+        "type": "string",
+        "min": 4,
+        "max": 6
+    },
     "hash": {
         "type": "string",
         "size": "Variable",
         },
+    "enabled": {
+        "type": "boolean",
+        "size": "----",
+    },
+    "url": {
+        "type": "string",
+        "size": "Variable",
+    },
+    # ============================================================
+    # MICROSERVICIO EVENTS
+    # ============================================================
+    "userId": {
+        "type": "string",
+        "min": 1,
+        "max": 36,
+    },
+    "username": {
+        "type": "string",
+        "min": 1,
+        "max": 36,
+    },
+    "payload": {
+        "type": "object",
+        "size": "---",
+    },
+    "title": {
+        "type": "string",
+        "min": 1,
+        "max": 50,
+    },
+    "link": {
+        "type": "string",
+        "size": "Variable",
+    },
+    "type": {
+        "type": "string",
+        "min": 1,
+        "max": 20,
+    },
+    "notificationId": {
+        "type": "string",
+        "min": 1,
+        "max": 50,
+    },
+    "notification": {
+        "type": "object",
+        "size": "---",
+    },
+    "id": {
+        "type": "string",
+        "min": 1,
+        "max": 50,
+    },
+    "read": {
+        "type": "boolean",
+        "size": "----",
+    },
+    "timestamp": {
+        "type": "string",
+        "size": "Variable",
+    },
+    "success": {
+        "type": "boolean",
+        "size": "----",
+    },
+    "redirectTo": {
+        "type": "string",
+        "size": "Variable",
+    },
+    # ============================================================
+    # MICROSERVICIO WALLET
+    # ============================================================
+    "balances": {
+        "type": "array",
+        "min": 0,
+        "max": 100,
+    },
+    "detailTokens": {
+        "type": "array",
+        "min": 0,
+        "max": 100,
+    },
+    "symbol": {
+        "type": "string",
+        "min": 1,
+        "max": 10,
+    },
+    "stablecoin": {
+        "type": "string",
+        "min": 1,
+        "max": 10,
+    },
+    "country": {
+        "type": "string",
+        "min": 1,
+        "max": 3,
+    },
+    "status": {
+        "type": "string",
+        "min": 1,
+        "max": 10,
+    },
+    "balancePol": {
+        "type": "object",
+        "size": "---",
+    },
+    "features": {
+        "type": "object",
+        "size": "---",
+    },
+    "balance": {
+        "type": "number",
+        "size": "Variable",
+    },
+    "tokensBalance": {
+        "type": "number",
+        "size": "Variable",
+    },
+    "totalTokens": {
+        "type": "number",
+        "size": "Variable",
+    },
+    "tokenPriceInUSD": {
+        "type": "number",
+        "size": "Variable",
+    },
+    "walletAddress": {
+        "type": "string",
+        "size": "Variable",
+    },
+    "address": {
+        "type": "string",
+        "size": "Variable",
+    }
 }
