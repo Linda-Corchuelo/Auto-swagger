@@ -11,6 +11,10 @@ Reglas cubiertas:
   C) "Estructura del JSON de salida desencriptado" solo se imprime en
      endpoints CIFRADOS.
   D) Ningún subtítulo se imprime sin contenido debajo.
+  E) Endpoints SIN requestBody y SIN ejemplo desencriptado (ej.
+     GET /events/stream) generan el ejemplo JSON desde sus parámetros
+     de consulta, siempre que la sección quedaría vacía. Los cifrados
+     (que ya tienen ejemplo desencriptado) no se ven afectados.
 
 Ejecución:
     python tests/test_no_duplicados.py
@@ -31,8 +35,9 @@ from generator.word_generator import (  # noqa: E402
     _schema_rows,
     add_endpoint_section,
     classify_endpoints,
+    generate_sample_json_from_parameters,
 )
-from swagger.endpoint import SchemaInfo, SchemaProperty  # noqa: E402
+from swagger.endpoint import ParameterInfo, SchemaInfo, SchemaProperty  # noqa: E402
 from swagger.parser import parse_endpoints  # noqa: E402
 
 
@@ -159,7 +164,8 @@ def json_blocks(document):
     return [item for item in doc_items(document) if item[0] == "t" and item[1] == 1]
 
 
-def openapi(description, *, rb=None, params=None, responses=None):
+def openapi(description, *, rb=None, params=None, responses=None,
+            method="post", path="/demo"):
     operation = {
         "summary": "Operacion de prueba",
         "description": description,
@@ -180,7 +186,7 @@ def openapi(description, *, rb=None, params=None, responses=None):
     return {
         "openapi": "3.0.0",
         "info": {"title": "API de prueba", "version": "1.0.0"},
-        "paths": {"/demo": {"post": operation}},
+        "paths": {path: {method: operation}},
         "components": {"schemas": {"B": rb or {}, "R": RESPONSE_SPEC}},
     }
 
@@ -348,11 +354,15 @@ def test_con_cifrado_sin_salida_desencriptada_no_duplica_tabla():
 
 
 def test_sin_request_body_no_imprime_titulo_vacio():
-    """Escenario 3: sin ejemplo de entrada -> no queda el heading vacío."""
+    """Escenario 3: sin contenido -> no queda el heading vacío.
+
+    Usa un parámetro de CABECERA (no query): los headers no forman
+    parte del cuerpo JSON, así que no generan ejemplo de entrada.
+    """
     spec = openapi(
         "Suscripcion SSE. No usa cifrado.",
         params=[
-            {"name": "userId", "in": "query", "required": True,
+            {"name": "X-Ct", "in": "header", "required": True,
              "schema": {"type": "string"}}
         ],
     )
@@ -366,6 +376,138 @@ def test_sin_request_body_no_imprime_titulo_vacio():
     assert len(structure_tables(document)) == 2, (
         f"Se esperaban 2 tablas (parámetros + respuesta), hay "
         f"{len(structure_tables(document))}"
+    )
+
+
+def test_helper_ejemplo_desde_query_params():
+    """generate_sample_json_from_parameters: example -> enum[0] -> placeholder."""
+    params = [
+        # 1) example documentado
+        ParameterInfo(name="userId", location="query", required=True,
+                      schema={"type": "string", "example": "usuario_comprador"}),
+        # 2) sin example pero con enum
+        ParameterInfo(name="estado", location="query",
+                      schema={"type": "string", "enum": ["pendiente", "activo"]}),
+        # 3) sin example ni enum -> placeholder por tipo
+        ParameterInfo(name="page", location="query",
+                      schema={"type": "integer"}),
+        ParameterInfo(name="filtro", location="query",
+                      schema={"type": "string"}),
+        # NO se incluyen: cabecera y ruta
+        ParameterInfo(name="X-Ct", location="header",
+                      schema={"type": "string", "example": "no_debe_salir"}),
+        ParameterInfo(name="id", location="path",
+                      schema={"type": "string", "example": "tampoco_sale"}),
+    ]
+
+    sample = generate_sample_json_from_parameters(params)
+
+    assert sample == {
+        "userId": "usuario_comprador",
+        "estado": "pendiente",
+        "page": 0,
+        "filtro": "<filtro>",
+    }, f"JSON generado inesperado: {sample}"
+
+    # Sin parámetros de consulta -> None (para no imprimir título vacío)
+    assert generate_sample_json_from_parameters([]) is None
+    assert generate_sample_json_from_parameters(None) is None
+    assert generate_sample_json_from_parameters(
+        [ParameterInfo(name="X-Ct", location="header", schema={"type": "string"})]
+    ) is None
+
+
+def test_events_stream_genera_ejemplo_desde_query_param():
+    """GET sin requestBody y con query userId -> muestra el ejemplo JSON.
+
+    Es el caso de GET /events/stream: único parámetro de entrada en
+    consulta, sin cifrado y sin bloque desencriptado en la descripción.
+    """
+    spec = openapi(
+        "Suscripcion SSE. No usa cifrado.",
+        params=[
+            {"name": "userId", "in": "query", "required": True,
+             "schema": {"type": "string", "example": "usuario_comprador"}}
+        ],
+        method="get",
+        path="/events/stream",
+    )
+    document = render(spec)
+    items = doc_items(document)
+
+    # La sección SÍ aparece
+    assert has_heading(document, "Ejemplo JSON de entrada"), (
+        "Debe generarse el ejemplo JSON desde los parámetros de consulta"
+    )
+
+    # Etiqueta sin "encriptado" (endpoint no cifrado)
+    texts = paragraph_texts(document)
+    idx = texts.index("Ejemplo JSON de entrada")
+    assert texts[idx + 1] == "Ejemplo JSON de entrada:", (
+        f"Etiqueta inesperada: {texts[idx + 1]!r}"
+    )
+
+    # El bloque JSON contiene el parámetro con su example documentado
+    assert len(json_blocks(document)) >= 1, "Debe imprimirse el bloque JSON"
+    json_text = " ".join(
+        cell
+        for kind, _rows, cells in json_blocks(document)
+        for cell in cells
+    )
+    assert "usuario_comprador" in json_text and "userId" in json_text, (
+        f"El ejemplo debe incluir userId=usuario_comprador, obtuve: {json_text!r}"
+    )
+
+    # Orden: Parámetros de entrada -> Ejemplo JSON de entrada -> Respuesta
+    def heading_index(text):
+        return next(
+            i for i, (kind, style, value) in enumerate(items)
+            if kind == "p" and style == "Heading 3" and value == text
+        )
+
+    i_params = heading_index("Parámetros de entrada")
+    i_example = heading_index("Ejemplo JSON de entrada")
+    i_response = heading_index("Respuesta")
+    assert i_params < i_example < i_response, (
+        "El ejemplo debe ir entre parámetros y respuesta"
+    )
+
+
+def test_query_example_no_duplica_en_cifrados():
+    """Endpoint cifrado con query + ejemplo desencriptado -> no duplica.
+
+    Los endpoints cifrados ya muestran el ejemplo desencriptado (con los
+    mismos campos que sus parámetros de consulta), así que el respaldo
+    desde query NO debe activarse.
+    """
+    spec = openapi(
+        "Consulta el recurso.\n"
+        "Estructura del JSON de entrada desencriptado:\n"
+        '{\n  "userName": "usuario_comprador"\n}',
+        params=[
+            {"name": "userName", "in": "query", "required": True,
+             "schema": {"type": "string", "example": "VALOR_QUERY_UNICO"}}
+        ],
+        method="get",
+        path="/wallet/balance",
+    )
+    document = render(spec)
+
+    # Sigue mostrando la sección (por el ejemplo desencriptado)
+    assert has_heading(document, "Ejemplo JSON de entrada")
+    assert has_paragraph(document, "Ejemplo de JSON de entrada desencriptado:")
+
+    # Pero NO añade un segundo ejemplo derivado de los query params
+    json_text = " ".join(
+        cell
+        for kind, _rows, cells in json_blocks(document)
+        for cell in cells
+    )
+    assert "VALOR_QUERY_UNICO" not in json_text, (
+        "El respaldo desde query no debe duplicar el ejemplo desencriptado"
+    )
+    assert "usuario_comprador" in json_text, (
+        "Debe conservarse el ejemplo desencriptado original"
     )
 
 

@@ -661,6 +661,70 @@ def _rows_are_equal(rows_a: List[Dict[str, str]],
     return [key(row) for row in rows_a] == [key(row) for row in rows_b]
 
 
+def generate_sample_json_from_parameters(parameters: List[Any]) -> Optional[Dict[str, Any]]:
+    """
+    Construye un JSON de ejemplo a partir de los parámetros de consulta
+    (query) de un endpoint que NO tiene requestBody.
+
+    Solo se incluyen los parámetros `query`, ya que los de cabecera
+    (X-Ct) y de ruta no forman parte del cuerpo de la petición.
+
+    Prioridad del valor de cada campo:
+      1. `example` documentado en el schema del parámetro.
+      2. Primer valor del `enum`, si existe.
+      3. Placeholder por tipo (_placeholder_for_parameter).
+
+    Devuelve None cuando no hay parámetros de consulta, para que la
+    sección no se imprima con un título sin contenido.
+    """
+    query_params = [
+        p for p in (parameters or [])
+        if getattr(p, "location", None) == "query"
+    ]
+
+    if not query_params:
+        return None
+
+    sample: Dict[str, Any] = {}
+
+    for param in query_params:
+        value = getattr(param, "example", None)
+
+        if value is None:
+            enum_values = getattr(param, "enum", []) or []
+            value = enum_values[0] if enum_values else None
+
+        if value is None:
+            # Placeholder coherente con el tipo declarado.
+            value = _placeholder_for_parameter(param)
+
+        sample[param.name] = value
+
+    return sample or None
+
+
+def _placeholder_for_parameter(param: Any) -> Any:
+    """
+    Valor de ejemplo por defecto cuando el parámetro no documenta
+    `example` ni `enum`:
+
+        string  -> "<userId>"   integer/number -> 0
+        boolean -> true         array -> []      object -> {}
+    """
+    param_type = getattr(param, "type", None) or "string"
+
+    if param_type in ("integer", "number"):
+        return 0
+    if param_type == "boolean":
+        return True
+    if param_type == "array":
+        return []
+    if param_type == "object":
+        return {}
+
+    return f"<{param.name}>"
+
+
 def add_schema_properties_table(document, schema: Any) -> None:
     """Genera la tabla con las propiedades de un schema OpenAPI (5 columnas)."""
     if not schema:
@@ -1086,6 +1150,20 @@ def add_endpoint_section(
 
     show_input_sample = bool(sample_input)
     show_decrypted_input_sample = bool(json_entrada_desencriptado)
+
+    # ── Respaldo: endpoint SIN requestBody y SIN ejemplo desencriptado ──
+    # (ej. GET /events/stream, cuyo único parámetro de entrada es una
+    # consulta). Se genera el ejemplo JSON desde los parámetros de
+    # consulta para que la sección no quede sin contenido. No afecta a
+    # los endpoints cifrados: ellos ya tienen ejemplo desencriptado y
+    # esta rama no se ejecuta.
+    if not show_input_sample and not show_decrypted_input_sample:
+        sample_from_params = generate_sample_json_from_parameters(
+            endpoint.parameters
+        )
+        if sample_from_params:
+            sample_input = sample_from_params
+            show_input_sample = True
 
     if show_input_sample or show_decrypted_input_sample:
 
