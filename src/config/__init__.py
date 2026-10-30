@@ -73,6 +73,12 @@ SWAGGER_SERVICES: List[Dict] = [
         "filter_paths": ["/wallet"],
         "auth": {"username": SWAGGER_AUTH_USERNAME, "password": SWAGGER_AUTH_PASSWORD} if SWAGGER_AUTH_USERNAME and SWAGGER_AUTH_PASSWORD else None,
     },
+    {
+        "url": "https://qacore-rummi.gse.com.co/vaults/api-docs/",
+        "section_name": "Rummi Vaults API",
+        "filter_paths": ["/vaults", "/auth"],
+        "auth": {"username": SWAGGER_AUTH_USERNAME, "password": SWAGGER_AUTH_PASSWORD} if SWAGGER_AUTH_USERNAME and SWAGGER_AUTH_PASSWORD else None,
+    },
 ]
 
 # ============================================================

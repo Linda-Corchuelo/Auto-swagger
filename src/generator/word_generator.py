@@ -617,6 +617,50 @@ def collect_schema_rows(properties: List[Any], prefix: str = "") -> List[Dict[st
     return rows
 
 
+def _schema_rows(schema: Any) -> List[Dict[str, str]]:
+    """
+    Devuelve las filas que renderizaría la tabla de un schema.
+
+    Retorna una lista vacía cuando no hay propiedades, de modo que
+    las secciones puedan comprobar si hay contenido real antes de
+    imprimir un subtítulo (evita subtítulos y tablas vacías).
+    """
+    if not schema:
+        return []
+
+    properties = getattr(schema, "properties", [])
+
+    if not properties:
+        return []
+
+    return collect_schema_rows(properties)
+
+
+def _rows_are_equal(rows_a: List[Dict[str, str]],
+                    rows_b: List[Dict[str, str]]) -> bool:
+    """
+    Compara dos tablas por su contenido completo (nombre, tipo,
+    tamaño, obligatorio y descripción).
+
+    Se usa para detectar duplicidad exacta entre la tabla de
+    "Respuesta exitosa" y la de "Estructura del JSON de salida
+    desencriptado" antes de imprimirlas dos veces.
+    """
+    if not rows_a or not rows_b:
+        return False
+
+    def key(row):
+        return (
+            row.get("name"),
+            row.get("type"),
+            row.get("size"),
+            row.get("required"),
+            row.get("description"),
+        )
+
+    return [key(row) for row in rows_a] == [key(row) for row in rows_b]
+
+
 def add_schema_properties_table(document, schema: Any) -> None:
     """Genera la tabla con las propiedades de un schema OpenAPI (5 columnas)."""
     if not schema:
@@ -780,16 +824,25 @@ def parse_endpoint_description(description: str) -> dict:
         return "\n".join(result_lines).strip()
 
     def _strip_code_fences(text: str) -> str:
-        """Elimina fences markdown ```json ... ``` del contenido."""
+        """Elimina fences markdown ```json ... ``` del contenido.
+
+        Se eliminan TODOS los fences sobrantes (algunas descripciones
+        cierran con doble fence: "```\\n```"), ya que un fence residual
+        rompe el json.loads posterior.
+        """
         stripped = text.strip()
-        if stripped.startswith("```"):
-            # Quitar primera línea (```json o ```)
+
+        # Quitar fence(s) inicial(es): ```json o ```
+        while stripped.startswith("```"):
             first_nl = stripped.find("\n")
-            if first_nl != -1:
-                stripped = stripped[first_nl + 1:]
-            # Qutar última línea si es ```
-            if stripped.rstrip().endswith("```"):
-                stripped = stripped.rstrip()[:-3].rstrip()
+            if first_nl == -1:
+                return ""
+            stripped = stripped[first_nl + 1:].lstrip("\n")
+
+        # Quitar fence(s) de cierre sobrantes
+        while stripped.rstrip().endswith("```"):
+            stripped = stripped.rstrip()[:-3].rstrip()
+
         return stripped
 
     def _clean_json_trailing_commas(text: str) -> str:
@@ -966,15 +1019,41 @@ def add_endpoint_section(
             add_parameters_table(document, endpoint.parameters, required_only=is_get_users)
 
     elif has_params:
-        p_intro = document.add_paragraph()
-        p_intro.add_run("Los parámetros de la petición deben cumplir con los siguientes atributos:")
-        add_parameters_table(document, endpoint.parameters, required_only=is_get_users)
+        # ── Endpoints cifrados sin requestBody (típicamente GET) ─────────
+        # Los parámetros de consulta del Swagger son los mismos campos
+        # desencriptados que se documentan más abajo en la sección
+        # "Estructura de JSON de entrada desencriptado". Para evitar
+        # duplicarlos, aquí solo se listan los parámetros de cabecera
+        # (ej. X-Ct) y de ruta, y los campos de negocio quedan
+        # exclusivamente en la tabla desencriptada.
+        header_path_params = [
+            p for p in endpoint.parameters
+            if p.location in ("header", "path")
+        ]
+        has_query_params = any(
+            p.location == "query" for p in endpoint.parameters
+        )
+
+        if is_encrypted and json_entrada_desencriptado and has_query_params:
+            if header_path_params:
+                p_intro = document.add_paragraph()
+                p_intro.add_run(
+                    "Los parámetros de cabecera / ruta de la petición deben cumplir con los siguientes atributos:"
+                )
+                add_parameters_table(document, header_path_params)
+            # Los campos de consulta NO se listan aquí: ya aparecen
+            # en la tabla "Estructura de JSON de entrada desencriptado".
+        else:
+            p_intro = document.add_paragraph()
+            p_intro.add_run("Los parámetros de la petición deben cumplir con los siguientes atributos:")
+            add_parameters_table(document, endpoint.parameters, required_only=is_get_users)
     else:
         p_intro = document.add_paragraph()
         p_intro.add_run("Este endpoint no requiere parámetros de entrada adicionales.")
 
     # ── Estructura de JSON de entrada desencriptado (ANTES del heading de ejemplo)
-    if is_encrypted:
+    # Solo se imprime si realmente hay contenido que mostrar.
+    if is_encrypted and (json_entrada_desencriptado or has_rb):
         p_entrada_struct = document.add_paragraph()
         r_entrada_struct = p_entrada_struct.add_run("Estructura de JSON de entrada desencriptado")
         r_entrada_struct.bold = True
@@ -988,17 +1067,41 @@ def add_endpoint_section(
         elif has_rb:
             add_schema_properties_table(document, first_rb_content)
 
-    # ── Ejemplo JSON de entrada (Heading 3, siempre se muestra)
-    document.add_heading(h3_ejemplo_in, level=3)
-    if has_rb:
-        document.add_paragraph("Ejemplo correspondiente al consumo del endpoint:")
-        sample_input = generate_sample_json(first_rb_content)
-        add_code_block(document, sample_input)
+    # ── Ejemplo JSON de entrada (Heading 3) ─────────────────────────────
+    #
+    # La sección se imprime justo después de los parámetros de entrada,
+    # siempre que exista contenido real:
+    #
+    #   - Ejemplo del requestBody: valores de ejemplo de los campos.
+    #   - Ejemplo desencriptado: además, cuando existe en la descripción
+    #     (aporta información propia de los endpoints cifrados).
+    #
+    # Si no hay contenido (sin requestBody y sin ejemplo desencriptado)
+    # no se imprime el heading, para evitar subtítulos vacíos.
+    sample_input = (
+        generate_sample_json(first_rb_content)
+        if has_rb
+        else None
+    )
 
-    # ── Ejemplo de entrada desencriptado (solo si existe en la descripción)
-    if json_entrada_desencriptado:
-        document.add_paragraph("Ejemplo de JSON de entrada desencriptado:")
-        add_code_block(document, json_entrada_desencriptado)
+    show_input_sample = bool(sample_input)
+    show_decrypted_input_sample = bool(json_entrada_desencriptado)
+
+    if show_input_sample or show_decrypted_input_sample:
+
+        document.add_heading(h3_ejemplo_in, level=3)
+
+        if show_input_sample:
+            document.add_paragraph(
+                "Ejemplo JSON de entrada encriptado:"
+                if is_encrypted
+                else "Ejemplo JSON de entrada:"
+            )
+            add_code_block(document, sample_input)
+
+        if show_decrypted_input_sample:
+            document.add_paragraph("Ejemplo de JSON de entrada desencriptado:")
+            add_code_block(document, json_entrada_desencriptado)
 
     # ── Ejemplo Body desencriptado (solo si existe en la descripción)
     #if body_desencriptado:
@@ -1013,40 +1116,70 @@ def add_endpoint_section(
         (r for r in endpoint.responses if r.status_code.startswith("2") and r.content),
         None,
     ) or next((r for r in endpoint.responses if r.content), None)
-    
+
+    # ── Respuesta exitosa (subtítulo + tabla de estructura) ─────────────
+    # Solo se imprime si la tabla tendrá filas reales: evita el
+    # subtítulo en negrita sin contenido debajo.
+    resp_schema = None
+    resp_rows: List[Dict[str, str]] = []
+
     if success_response and success_response.content:
+        resp_schema = next(iter(success_response.content.values()))
+        resp_rows = _schema_rows(resp_schema)
+
+    if resp_rows:
         p_main = document.add_paragraph()
         r_bullet = p_main.add_run("Respuesta exitosa")
         r_bullet.bold = True
-        resp_schema = next(iter(success_response.content.values()))
-        # Tabla de estructura de la respuesta exitosa
         add_schema_properties_table(document, resp_schema)
 
     # ── Estructura del JSON de salida desencriptado ─────────────────────
-    if success_response and success_response.content:
-        # Título de la tabla de salida desencriptada
-        p_output = document.add_paragraph()
-        r_output = p_output.add_run("Estructura del JSON de salida desencriptado")
-        r_output.bold = True
+    # Condiciones dinámicas:
+    #   1. Únicamente endpoints CIFRADOS: la salida desencriptada solo
+    #      aplica a servicios que implementan cifrado/descifrado.
+    #   2. Únicamente si su contenido difiere de la tabla anterior:
+    #      evita imprimir dos tablas con exactamente la misma
+    #      información (en ese caso se conserva "Respuesta exitosa").
+    if is_encrypted and resp_rows:
 
-        # Generar el schema a partir del JSON desencriptado
         if json_salida_desencriptado:
-            output_json = json.loads(json_salida_desencriptado)
-            output_schema = generate_schema_from_json(output_json)
-        else: output_schema = resp_schema
-        # Agregar la tabla con la estructura del JSON desencriptado
-        add_schema_properties_table(document, output_schema)
-        
+            try:
+                output_json = json.loads(json_salida_desencriptado)
+                output_schema = generate_schema_from_json(output_json)
+            except json.JSONDecodeError:
+                # Si el JSON desencriptado viene corrupto en el Swagger,
+                # se usa el schema de la respuesta para no detener la
+                # generación del documento.
+                print(
+                    f"[AVISO] JSON de salida inválido en "
+                    f"{endpoint.method} {endpoint.path}. "
+                    f"Se usa el schema de la respuesta."
+                )
+                output_schema = resp_schema
+        else:
+            output_schema = resp_schema
+
+        output_rows = _schema_rows(output_schema)
+
+        if output_rows and not _rows_are_equal(output_rows, resp_rows):
+            p_output = document.add_paragraph()
+            r_output = p_output.add_run(
+                "Estructura del JSON de salida desencriptado"
+            )
+            r_output.bold = True
+            add_schema_properties_table(document, output_schema)
+
     # ── Ejemplo JSON de salida (desencriptado desde Swagger o generado)
     if json_salida_desencriptado:
         document.add_heading(h3_ejemplo_out, level=3)
         document.add_paragraph("Ejemplo de respuesta JSON desencriptado obtenida del endpoint:")
         add_code_block(document, json_salida_desencriptado)
-    elif success_response and success_response.content:
-        document.add_heading(h3_ejemplo_out, level=3)
-        document.add_paragraph("Ejemplo de respuesta JSON desencriptado obtenida del endpoint:")
+    elif resp_schema is not None:
         sample_output = generate_sample_json(resp_schema)
-        add_code_block(document, sample_output)
+        if sample_output:
+            document.add_heading(h3_ejemplo_out, level=3)
+            document.add_paragraph("Ejemplo de respuesta JSON desencriptado obtenida del endpoint:")
+            add_code_block(document, sample_output)
 
     # ── Valores para el atributo de statusCode (Heading 3)
     document.add_heading(h3_status, level=3)
@@ -1154,9 +1287,9 @@ def _update_toc_with_word(docx_path: Path) -> None:
         word.Quit()
         pythoncom.CoUninitialize()
     except ImportError:
-        print("[INFO] pywin32 no instalado. La TOC se actualizará al abrir el archivo en Word (Ctrl+A → F9).")
+        print("[INFO] pywin32 no instalado. La TOC se actualizara al abrir el archivo en Word (Ctrl+A -> F9).")
     except Exception as e:
-        print(f"[INFO] No se pudo actualizar la TOC automáticamente ({e}). Ábrela en Word y presiona Ctrl+A → F9.")
+        print(f"[INFO] No se pudo actualizar la TOC automaticamente ({e}). Abrirla en Word y presionar Ctrl+A -> F9.")
 
 
 def _add_service_info_block(document, doc_data: Dict[str, Any]) -> None:

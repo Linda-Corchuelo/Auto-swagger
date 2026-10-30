@@ -1,3 +1,5 @@
+import json
+
 from swagger.endpoint import (
     Endpoint,
     ParameterInfo,
@@ -162,6 +164,140 @@ def extract_example(data):
         return first_example
 
     return None
+
+
+# ============================================================
+# SCHEMA DESDE EXAMPLE
+# ============================================================
+
+def infer_example_type(value):
+    """
+    Infiere el tipo OpenAPI a partir de un valor Python
+    obtenido de un ejemplo JSON.
+
+    Ejemplos:
+
+        True   -> boolean
+        1      -> integer
+        1.5    -> number
+        [...]  -> array
+        {...}  -> object
+        "texto" -> string
+    """
+
+    if isinstance(value, bool):
+        return "boolean"
+
+    if isinstance(value, int):
+        return "integer"
+
+    if isinstance(value, float):
+        return "number"
+
+    if isinstance(value, list):
+        return "array"
+
+    if isinstance(value, dict):
+        return "object"
+
+    return "string"
+
+
+def property_from_example(name, value, required=True):
+    """
+    Convierte un valor de ejemplo (dict / lista / escalar)
+    en un SchemaProperty anidado, replicando la estructura
+    del JSON para poder renderizar la tabla de propiedades.
+    """
+
+    property_type = infer_example_type(value)
+
+    if property_type == "object":
+
+        properties = [
+            property_from_example(child_name, child_value)
+            for child_name, child_value in value.items()
+        ]
+
+        return SchemaProperty(
+            name=name,
+            type="object",
+            required=required,
+            properties=properties,
+            example=value,
+        )
+
+    if property_type == "array":
+
+        items = None
+
+        if value:
+            items = property_from_example(
+                "items",
+                value[0],
+                required=False,
+            )
+
+        return SchemaProperty(
+            name=name,
+            type="array",
+            required=required,
+            items=items,
+            example=value,
+        )
+
+    return SchemaProperty(
+        name=name,
+        type=property_type,
+        required=required,
+        example=value,
+    )
+
+
+def build_schema_from_example(name, example, reference=None):
+    """
+    Construye un SchemaInfo a partir de un ejemplo JSON.
+
+    Caso de uso: respuestas `text/event-stream` (SSE), donde el
+    Swagger declara el schema como un `string` plano SIN
+    properties y el payload real de cada evento solo vive en
+    `example`. Sin este paso, `add_schema_properties_table`
+    no tiene propiedades que imprimir y la tabla de respuesta
+    queda vacía.
+
+    Retorna None cuando:
+      - no hay ejemplo,
+      - el ejemplo no es JSON válido,
+      - el JSON no es un objeto (dict) con estructura utilizable.
+    """
+
+    if example is None:
+        return None
+
+    payload = example
+
+    if isinstance(payload, str):
+
+        try:
+            payload = json.loads(payload)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return None
+
+    if not isinstance(payload, dict) or not payload:
+        return None
+
+    properties = [
+        property_from_example(prop_name, prop_value)
+        for prop_name, prop_value in payload.items()
+    ]
+
+    return SchemaInfo(
+        name=name,
+        reference=reference,
+        type="object",
+        properties=properties,
+        example=example,
+    )
 
 
 # ============================================================
@@ -627,6 +763,34 @@ def parse_content_schema(
             parsed_schema.example = (
                 media_example
             )
+
+        # ----------------------------------------------------
+        # text/event-stream (SSE)
+        #
+        # El Swagger declara la respuesta como un `string`
+        # plano sin properties (cada evento es un JSON
+        # serializado dentro del stream). Si el `example` es
+        # JSON, se reconstruye el schema para poder documentar
+        # la estructura del evento en la tabla de respuesta.
+        # ----------------------------------------------------
+
+        if (
+            "event-stream" in content_type.lower()
+            and not parsed_schema.properties
+        ):
+
+            rebuilt_schema = build_schema_from_example(
+                name=parsed_schema.name,
+                example=(
+                    media_example
+                    if media_example is not None
+                    else parsed_schema.example
+                ),
+                reference=parsed_schema.reference,
+            )
+
+            if rebuilt_schema is not None:
+                parsed_schema = rebuilt_schema
 
         result[content_type] = (
             parsed_schema

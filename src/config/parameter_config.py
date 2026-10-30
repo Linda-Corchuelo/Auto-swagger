@@ -30,7 +30,7 @@ PARAMETER_CONFIG = {
     },
     "statusCode": {
         "type": "number",
-        "size": "3 digitos",
+        "size": "3 dígitos",
     },
     "code": {
         "type": "string",
